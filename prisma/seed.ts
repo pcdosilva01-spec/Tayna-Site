@@ -1,161 +1,100 @@
-import { PrismaClient } from '@prisma/client'
-import bcrypt from 'bcryptjs'
+// Prisma seed file
+// Run: npx prisma db seed
 
-const prisma = new PrismaClient()
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient();
 
 async function main() {
-  console.log('🌱 Iniciando seed...')
+  console.log("🌱 Seeding database...");
 
-  // Admin user
-  const hashedPassword = await bcrypt.hash('admin123', 10)
-  const admin = await prisma.user.upsert({
-    where: { email: 'admin@taynaboutique.com' },
+  // Settings
+  await prisma.settings.upsert({
+    where: { id: "default" },
     update: {},
     create: {
-      email: 'admin@taynaboutique.com',
-      name: 'Admin',
-      password: hashedPassword,
-      role: 'ADMIN',
+      id: "default",
+      storeName: "Tayna Xavier Boutique",
+      whatsapp: "(00) 00000-0000",
+      instagram: "@taynaxavier_boutique",
+      email: "contato@taynaxavier.com.br",
+      address: "Brasil",
     },
-  })
-
-  console.log('✅ Admin criado:', admin.email)
+  });
 
   // Categories
   const categories = [
-    { name: 'Vestidos', slug: 'vestidos', order: 1 },
-    { name: 'Conjuntos', slug: 'conjuntos', order: 2 },
-    { name: 'Cropped', slug: 'cropped', order: 3 },
-    { name: 'Jeans', slug: 'jeans', order: 4 },
-    { name: 'Moda Feminina', slug: 'moda-feminina', order: 5 },
-    { name: 'Acessórios', slug: 'acessorios', order: 6 },
-    { name: 'Lançamentos', slug: 'lancamentos', order: 7 },
-  ]
+    { name: "Vestidos", slug: "vestidos" },
+    { name: "Conjuntos", slug: "conjuntos" },
+    { name: "Blusas & Tops", slug: "blusas" },
+    { name: "Saias & Calças", slug: "saias-calcas" },
+    { name: "Acessórios", slug: "acessorios" },
+    { name: "Moda Praia", slug: "moda-praia" },
+  ];
 
+  const createdCategories: Record<string, string> = {};
   for (const cat of categories) {
-    await prisma.category.upsert({
+    const created = await prisma.category.upsert({
       where: { slug: cat.slug },
-      update: {},
+      update: { name: cat.name },
       create: cat,
-    })
+    });
+    createdCategories[cat.slug] = created.id;
   }
 
-  console.log('✅ Categorias criadas')
-
   // Products
-  const vestidosCategory = await prisma.category.findUnique({ where: { slug: 'vestidos' } })
-  const conjuntosCategory = await prisma.category.findUnique({ where: { slug: 'conjuntos' } })
-  const croppedCategory = await prisma.category.findUnique({ where: { slug: 'cropped' } })
-
   const products = [
-    {
-      name: 'Vestido Midi Floral',
-      slug: 'vestido-midi-floral',
-      description: 'Vestido midi com estampa floral delicada, perfeito para ocasiões especiais',
-      price: 189.90,
-      comparePrice: 249.90,
-      images: ['/placeholder-product.jpg'],
-      stock: 15,
-      featured: true,
-      categoryId: vestidosCategory!.id,
-    },
-    {
-      name: 'Vestido Longo Festa',
-      slug: 'vestido-longo-festa',
-      description: 'Vestido longo elegante ideal para festas e eventos',
-      price: 299.90,
-      comparePrice: 399.90,
-      images: ['/placeholder-product.jpg'],
-      stock: 8,
-      featured: true,
-      categoryId: vestidosCategory!.id,
-    },
-    {
-      name: 'Conjunto Alfaiataria',
-      slug: 'conjunto-alfaiataria',
-      description: 'Conjunto blazer e calça alfaiataria premium',
-      price: 349.90,
-      comparePrice: 449.90,
-      images: ['/placeholder-product.jpg'],
-      stock: 12,
-      featured: true,
-      categoryId: conjuntosCategory!.id,
-    },
-    {
-      name: 'Conjunto Tricot',
-      slug: 'conjunto-tricot',
-      description: 'Conjunto em tricot macio e confortável',
-      price: 219.90,
-      images: ['/placeholder-product.jpg'],
-      stock: 20,
-      categoryId: conjuntosCategory!.id,
-    },
-    {
-      name: 'Cropped Canelado',
-      slug: 'cropped-canelado',
-      description: 'Cropped canelado básico essencial',
-      price: 79.90,
-      images: ['/placeholder-product.jpg'],
-      stock: 30,
-      categoryId: croppedCategory!.id,
-    },
-    {
-      name: 'Cropped Manga Longa',
-      slug: 'cropped-manga-longa',
-      description: 'Cropped manga longa em ribana',
-      price: 89.90,
-      images: ['/placeholder-product.jpg'],
-      stock: 25,
-      categoryId: croppedCategory!.id,
-    },
-  ]
+    { name: "Vestido Midi Floral Rosa", slug: "vestido-midi-floral-rosa", description: "Vestido midi com estampa floral delicada em tons de rosa. Tecido fluido e confortável, ideal para ocasiões especiais.", price: 289.90, comparePrice: 349.90, images: ["/images/products/vestido-1.jpg"], stock: 15, featured: true, categoryId: createdCategories["vestidos"] },
+    { name: "Conjunto Cropped + Saia Linho", slug: "conjunto-cropped-saia-linho", description: "Conjunto sofisticado em linho natural. Cropped com amarração e saia midi evasê.", price: 379.90, comparePrice: null, images: ["/images/products/conjunto-1.jpg"], stock: 10, featured: true, categoryId: createdCategories["conjuntos"] },
+    { name: "Blusa Cetim Off-White", slug: "blusa-cetim-off-white", description: "Blusa em cetim premium com caimento impecável. Decote V delicado e mangas bufantes.", price: 189.90, comparePrice: 229.90, images: ["/images/products/blusa-1.jpg"], stock: 20, featured: false, categoryId: createdCategories["blusas"] },
+    { name: "Calça Wide Leg Alfaiataria", slug: "calca-wide-leg-alfaiataria", description: "Calça wide leg em tecido de alfaiataria premium. Cintura alta com pregas frontais.", price: 259.90, comparePrice: null, images: ["/images/products/calca-1.jpg"], stock: 12, featured: true, categoryId: createdCategories["saias-calcas"] },
+    { name: "Vestido Longo Festa Preto", slug: "vestido-longo-festa-preto", description: "Vestido longo elegante em crepe preto. Fenda lateral e decote nas costas.", price: 459.90, comparePrice: 559.90, images: ["/images/products/vestido-2.jpg"], stock: 8, featured: true, categoryId: createdCategories["vestidos"] },
+    { name: "Conjunto Blazer + Short", slug: "conjunto-blazer-short", description: "Conjunto power feminino com blazer estruturado e short alfaiataria.", price: 429.90, comparePrice: null, images: ["/images/products/conjunto-2.jpg"], stock: 7, featured: false, categoryId: createdCategories["conjuntos"] },
+    { name: "Top Cropped Tricot Rosa", slug: "top-cropped-tricot-rosa", description: "Cropped em tricot com detalhes em rosa. Peça versátil e feminina.", price: 149.90, comparePrice: 179.90, images: ["/images/products/top-1.jpg"], stock: 25, featured: false, categoryId: createdCategories["blusas"] },
+    { name: "Saia Midi Plissada Dourada", slug: "saia-midi-plissada-dourada", description: "Saia midi plissada com brilho sutil dourado. Elegância e movimento.", price: 219.90, comparePrice: null, images: ["/images/products/saia-1.jpg"], stock: 14, featured: true, categoryId: createdCategories["saias-calcas"] },
+  ];
 
   for (const product of products) {
     await prisma.product.upsert({
       where: { slug: product.slug },
-      update: {},
-      create: product,
-    })
+      update: { ...product },
+      create: { ...product },
+    });
   }
 
-  console.log('✅ Produtos criados')
-
-  // Settings
-  await prisma.settings.upsert({
-    where: { id: 'default' },
-    update: {},
-    create: {
-      id: 'default',
-      storeName: 'Tayna Xavier Boutique',
-      whatsapp: '5511999999999',
-      instagram: 'taynaxavier_boutique',
-      email: 'contato@taynaboutique.com',
-      description: 'Moda feminina premium com estilo e elegância',
-    },
-  })
-
-  console.log('✅ Configurações criadas')
-
   // Coupons
-  await prisma.coupon.create({
-    data: {
-      code: 'BEMVINDA10',
-      discount: 10,
-      type: 'PERCENTAGE',
-      minPurchase: 100,
-      maxUses: 100,
-    },
-  })
+  await prisma.coupon.upsert({
+    where: { code: "BEMVINDA10" },
+    update: {},
+    create: { code: "BEMVINDA10", discount: 10, isActive: true },
+  });
+  await prisma.coupon.upsert({
+    where: { code: "VERAO20" },
+    update: {},
+    create: { code: "VERAO20", discount: 20, isActive: true, expiresAt: new Date("2025-12-31") },
+  });
 
-  console.log('✅ Cupons criados')
-  console.log('🎉 Seed concluído!')
+  // Admin user
+  // const bcrypt = require("bcryptjs");
+  // await prisma.user.upsert({
+  //   where: { email: "admin@taynaxavier.com.br" },
+  //   update: {},
+  //   create: {
+  //     name: "Admin",
+  //     email: "admin@taynaxavier.com.br",
+  //     password: await bcrypt.hash("admin123", 12),
+  //     role: "ADMIN",
+  //   },
+  // });
+
+  console.log("✅ Database seeded successfully!");
 }
 
 main()
   .catch((e) => {
-    console.error(e)
-    process.exit(1)
+    console.error("❌ Seed failed:", e);
+    process.exit(1);
   })
   .finally(async () => {
-    await prisma.$disconnect()
-  })
+    await prisma.$disconnect();
+  });
