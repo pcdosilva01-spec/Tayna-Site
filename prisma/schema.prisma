@@ -22,6 +22,7 @@ model User {
   orders        Order[]
   addresses     Address[]
   wishlist      Wishlist[]
+  coupons       Coupon[]
 }
 
 enum Role {
@@ -104,13 +105,20 @@ model OrderItem {
 }
 
 model Coupon {
-  id        String   @id @default(cuid())
-  code      String   @unique
-  discount  Float
-  expiresAt DateTime?
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                String   @id @default(cuid())
+  code              String   @unique
+  discount          Float
+  expiresAt         DateTime?
+  isActive          Boolean  @default(true)
+  firstPurchaseOnly Boolean  @default(false)
+  associatedLoginId String?
+  associatedCpf     String?
+  associatedEmail   String?
+  associatedPhone   String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  user              User?    @relation(fields: [associatedLoginId], references: [id])
 }
 
 model Address {

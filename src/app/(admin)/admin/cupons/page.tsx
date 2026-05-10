@@ -7,7 +7,7 @@ import { formatDateShort } from "@/utils/format";
 
 type Coupon = { id: string; code: string; discount: number; expiresAt: string | null; isActive: boolean; uses: number };
 
-const emptyForm = { code: "", discount: "", expiresAt: "", isActive: true };
+const emptyForm = { code: "", discount: "", expiresAt: "", isActive: true, firstPurchaseOnly: false, associatedEmail: "", associatedCpf: "", associatedPhone: "" };
 
 export default function AdminCouponsPage() {
   const [coupons, setCoupons] = useState<Coupon[]>([]);
@@ -35,6 +35,10 @@ export default function AdminCouponsPage() {
       discount: Number(form.discount),
       expiresAt: form.expiresAt ? new Date(form.expiresAt).toISOString() : null,
       isActive: form.isActive,
+      firstPurchaseOnly: form.firstPurchaseOnly,
+      associatedEmail: form.associatedEmail || undefined,
+      associatedCpf: form.associatedCpf || undefined,
+      associatedPhone: form.associatedPhone || undefined,
     });
     if (res.success) {
       setShowModal(false);
@@ -178,6 +182,45 @@ export default function AdminCouponsPage() {
                   className="rounded"
                 />
                 <label htmlFor="couponActive" className="text-sm">Ativar cupom imediatamente</label>
+              </div>
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox" id="firstPurchaseOnly" checked={form.firstPurchaseOnly} onChange={e => setForm(p => ({ ...p, firstPurchaseOnly: e.target.checked }))}
+                  className="rounded"
+                />
+                <label htmlFor="firstPurchaseOnly" className="text-sm">Apenas para 1ª compra</label>
+              </div>
+
+              <div className="pt-2 border-t border-border">
+                <p className="text-xs font-semibold text-muted-foreground mb-3">REGRAS DE RESTRIÇÃO (Opcional)</p>
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-[11px] font-medium text-muted-foreground mb-1 block">Associar a um E-mail</label>
+                    <input
+                      type="email" value={form.associatedEmail} onChange={e => setForm(p => ({ ...p, associatedEmail: e.target.value }))}
+                      placeholder="exemplo@email.com"
+                      className="w-full px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand/30"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[11px] font-medium text-muted-foreground mb-1 block">Associar a um CPF</label>
+                      <input
+                        type="text" value={form.associatedCpf} onChange={e => setForm(p => ({ ...p, associatedCpf: e.target.value }))}
+                        placeholder="000.000.000-00"
+                        className="w-full px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand/30"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-medium text-muted-foreground mb-1 block">Associar a um Telefone</label>
+                      <input
+                        type="text" value={form.associatedPhone} onChange={e => setForm(p => ({ ...p, associatedPhone: e.target.value }))}
+                        placeholder="(00) 00000-0000"
+                        className="w-full px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand/30"
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
             <div className="flex gap-3 p-6 pt-0">

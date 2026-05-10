@@ -141,6 +141,10 @@ export async function getCoupons() {
         discount: c.discount,
         expiresAt: c.expiresAt ? c.expiresAt.toISOString() : null,
         isActive: c.isActive,
+        firstPurchaseOnly: c.firstPurchaseOnly,
+        associatedEmail: c.associatedEmail,
+        associatedCpf: c.associatedCpf,
+        associatedPhone: c.associatedPhone,
         uses: 0,
       })),
     };
@@ -155,6 +159,10 @@ export async function createCoupon(data: {
   discount: number;
   expiresAt: string | null;
   isActive: boolean;
+  firstPurchaseOnly?: boolean;
+  associatedEmail?: string;
+  associatedCpf?: string;
+  associatedPhone?: string;
 }) {
   try {
     const coupon = await prisma.coupon.create({
@@ -163,6 +171,10 @@ export async function createCoupon(data: {
         discount: data.discount,
         isActive: data.isActive,
         expiresAt: data.expiresAt ? new Date(data.expiresAt) : null,
+        firstPurchaseOnly: data.firstPurchaseOnly || false,
+        associatedEmail: data.associatedEmail || null,
+        associatedCpf: data.associatedCpf || null,
+        associatedPhone: data.associatedPhone || null,
       },
     });
     revalidatePath("/admin/cupons");
