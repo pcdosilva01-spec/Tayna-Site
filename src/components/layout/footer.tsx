@@ -35,6 +35,7 @@ export function Footer() {
           whatsapp: res.data.whatsapp || "(00) 00000-0000",
           instagram: res.data.instagram || INSTAGRAM_URL,
           email: res.data.email || "contato@taynaxavier.com.br",
+          address: res.data.address || "",
         });
       }
     }
