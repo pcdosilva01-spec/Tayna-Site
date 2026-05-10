@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Mail, Phone, Heart } from "lucide-react";
 import { STORE_NAME, INSTAGRAM_URL, NAV_LINKS } from "@/lib/constants";
 import { toast } from "sonner";
