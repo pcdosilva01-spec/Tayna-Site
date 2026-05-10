@@ -164,8 +164,9 @@ export async function updateSettings(data: unknown) {
       await prisma.settings.create({ data: sanitized as any });
     }
     return { success: true, message: "Configurações salvas" };
-  } catch (error) {
+  } catch (error: any) {
     console.error("updateSettings error:", error);
-    return { success: false, message: "Erro ao salvar configurações" };
+    const msg = error?.issues?.[0]?.message || error?.message || "Erro ao salvar configurações";
+    return { success: false, message: `Erro: ${msg}` };
   }
 }

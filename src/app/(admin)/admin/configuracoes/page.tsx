@@ -42,7 +42,7 @@ export default function AdminSettingsPage() {
     if (res.success) {
       alert("Configurações salvas com sucesso!");
     } else {
-      alert("Erro ao salvar configurações.");
+      alert(res.message || "Erro ao salvar configurações.");
     }
     setSaving(false);
   };
