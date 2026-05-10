@@ -1,92 +1,88 @@
 import { getProducts, getCategories } from '@/actions/products'
 import Link from 'next/link'
+import Image from 'next/image'
+import { ChevronLeft } from 'lucide-react'
 
-export default async function ProductsPage({
-  searchParams,
-}: {
-  searchParams: { categoria?: string; busca?: string }
-}) {
+type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>
+
+export default async function ProductsPage(props: { searchParams: SearchParams }) {
+  const searchParams = await props.searchParams
+  const categoria = typeof searchParams.categoria === 'string' ? searchParams.categoria : undefined
+  const busca = typeof searchParams.busca === 'string' ? searchParams.busca : undefined
+
   const [products, categories] = await Promise.all([
     getProducts({
-      categoryId: searchParams.categoria,
-      search: searchParams.busca,
+      categoryId: categoria,
+      search: busca,
     }),
     getCategories(),
   ])
 
   return (
-    <div style={{ padding: '2rem' }}>
-      <div style={{ marginBottom: '2rem' }}>
-        <Link href="/" style={{ color: '#666' }}>← Voltar</Link>
-      </div>
-
-      <h1 style={{ marginBottom: '2rem' }}>Produtos</h1>
-
-      <div style={{ marginBottom: '2rem', display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-        <Link
-          href="/produtos"
-          style={{
-            padding: '0.5rem 1rem',
-            border: '1px solid #ddd',
-            borderRadius: '4px',
-            background: !searchParams.categoria ? '#000' : '#fff',
-            color: !searchParams.categoria ? '#fff' : '#000',
-          }}
-        >
-          Todos
+    <main className="min-h-screen bg-white">
+      <nav className="container py-8 border-b border-[var(--color-border)] mb-8 flex flex-col md:flex-row md:justify-between items-center text-sm uppercase tracking-widest font-medium gap-4">
+        <Link href="/" className="flex items-center gap-2 hover:text-[var(--color-primary-dark)] transition-colors">
+          <ChevronLeft size={16} /> Voltar para Home
         </Link>
-        {categories.map((cat) => (
-          <Link
-            key={cat.id}
-            href={`/produtos?categoria=${cat.id}`}
-            style={{
-              padding: '0.5rem 1rem',
-              border: '1px solid #ddd',
-              borderRadius: '4px',
-              background: searchParams.categoria === cat.id ? '#000' : '#fff',
-              color: searchParams.categoria === cat.id ? '#fff' : '#000',
-            }}
-          >
-            {cat.name}
-          </Link>
-        ))}
-      </div>
+        <span className="font-serif normal-case text-xl hidden md:block">Tayna Xavier</span>
+        <div className="w-[120px] hidden md:block"></div>
+      </nav>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '1.5rem' }}>
-        {products.map((product) => (
-          <Link
-            key={product.id}
-            href={`/produtos/${product.slug}`}
-            style={{
-              border: '1px solid #ddd',
-              borderRadius: '8px',
-              overflow: 'hidden',
-            }}
-          >
-            <div style={{ aspectRatio: '1', background: '#f5f5f5' }} />
-            <div style={{ padding: '1rem' }}>
-              <h3 style={{ marginBottom: '0.5rem' }}>{product.name}</h3>
-              <p style={{ fontSize: '0.9rem', color: '#666', marginBottom: '0.5rem' }}>
-                {product.category.name}
-              </p>
-              <p style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>
-                R$ {product.price.toFixed(2)}
-              </p>
-              {product.comparePrice && (
-                <p style={{ fontSize: '0.9rem', color: '#999', textDecoration: 'line-through' }}>
-                  R$ {product.comparePrice.toFixed(2)}
-                </p>
-              )}
-            </div>
-          </Link>
-        ))}
-      </div>
+      <div className="container pb-24">
+        <h1 className="text-4xl font-serif text-center mb-12">Coleção Completa</h1>
 
-      {products.length === 0 && (
-        <p style={{ textAlign: 'center', color: '#666', marginTop: '3rem' }}>
-          Nenhum produto encontrado
-        </p>
-      )}
-    </div>
+        <div className="flex flex-wrap justify-center gap-4 mb-16">
+          <Link
+            href="/produtos"
+            className={`btn ${!categoria ? 'btn-primary' : 'btn-secondary'} text-xs`}
+          >
+            Todos
+          </Link>
+          {categories.map((cat) => (
+            <Link
+              key={cat.id}
+              href={`/produtos?categoria=${cat.slug || cat.id}`}
+              className={`btn ${categoria === (cat.slug || cat.id) ? 'btn-primary' : 'btn-secondary'} text-xs`}
+            >
+              {cat.name}
+            </Link>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8">
+          {products.map((product) => (
+            <Link
+              key={product.id}
+              href={`/produtos/${product.slug}`}
+              className="group block relative"
+            >
+              <div className="relative aspect-[3/4] overflow-hidden rounded-2xl mb-4 bg-gray-50 image-container">
+                <Image 
+                  src="/product1.png" 
+                  alt={product.name} 
+                  fill 
+                  className="object-cover image-hover"
+                />
+              </div>
+              <h3 className="font-serif text-lg mb-1 group-hover:text-[var(--color-primary-dark)] transition-colors">{product.name}</h3>
+              <p className="text-light text-xs tracking-widest uppercase mb-1">{product.category.name}</p>
+              <div className="flex items-center gap-2">
+                <p className="text-sm font-medium">R$ {product.price.toFixed(2)}</p>
+                {product.comparePrice && (
+                  <p className="text-xs text-gray-400 line-through">R$ {product.comparePrice.toFixed(2)}</p>
+                )}
+              </div>
+            </Link>
+          ))}
+        </div>
+
+        {products.length === 0 && (
+          <div className="text-center py-24">
+            <p className="text-gray-500 text-lg">Nenhum produto encontrado nesta categoria.</p>
+            <Link href="/produtos" className="btn btn-primary mt-6">Limpar Filtros</Link>
+          </div>
+        )}
+      </div>
+    </main>
   )
 }

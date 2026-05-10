@@ -4,11 +4,10 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { ChevronLeft, Truck, Info, ShieldCheck } from 'lucide-react'
 
-export default async function ProductPage({
-  params,
-}: {
-  params: { slug: string }
-}) {
+type Params = Promise<{ slug: string }>
+
+export default async function ProductPage(props: { params: Params }) {
+  const params = await props.params
   const product = await getProduct(params.slug)
 
   if (!product) {
@@ -52,7 +51,7 @@ export default async function ProductPage({
           {/* Details Section */}
           <div className="flex flex-col pt-4 md:pt-12 md:sticky md:top-12 h-fit">
             <span className="text-light text-sm uppercase tracking-widest mb-4">
-              {product.category.name}
+              {product.category?.name || 'Vestuário'}
             </span>
             <h1 className="font-serif text-4xl lg:text-5xl mb-6 text-gray-900">
               {product.name}
@@ -127,7 +126,8 @@ export default async function ProductPage({
   )
 }
 
-export async function generateMetadata({ params }: { params: { slug: string } }) {
+export async function generateMetadata(props: { params: Params }) {
+  const params = await props.params
   const product = await getProduct(params.slug)
   
   if (!product) {
