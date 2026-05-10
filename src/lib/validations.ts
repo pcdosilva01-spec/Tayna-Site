@@ -56,7 +56,7 @@ export const registerSchema = z.object({
   name: z.string().min(3, "Nome deve ter no mínimo 3 caracteres"),
   email: z.string().email("E-mail inválido"),
   password: z.string().min(8, "Senha deve ter no mínimo 8 caracteres"),
-  terms: z.literal(true, { errorMap: () => ({ message: "Você deve aceitar os termos" }) }),
+  terms: z.boolean().refine((val) => val === true, { message: "Você deve aceitar os termos" }),
 });
 
 // Newsletter validation

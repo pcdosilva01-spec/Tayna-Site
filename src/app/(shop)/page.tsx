@@ -7,11 +7,11 @@ import { HeroSection } from "@/components/shop/hero-section";
 import { ProductCard } from "@/components/shop/product-card";
 import { SAMPLE_PRODUCTS, SAMPLE_CATEGORIES } from "@/lib/sample-data";
 
-const fadeUp = {
+const fadeUp: any = {
   initial: { opacity: 0, y: 30 },
   whileInView: { opacity: 1, y: 0 },
   viewport: { once: true, margin: "-50px" },
-  transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] },
+  transition: { duration: 0.6, ease: "easeOut" },
 };
 
 const stagger = {

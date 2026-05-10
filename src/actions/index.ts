@@ -80,7 +80,7 @@ export async function createOrder(data: any) {
 
 export async function updateOrderStatus(id: string, status: any) {
   try {
-    await prisma.order.update({ where: { id }, data: { status } });
+    await prisma.order.update({ where: { id }, data: { orderStatus: status } });
     return { success: true, message: "Status atualizado" };
   } catch (error) {
     return { success: false, message: "Erro ao atualizar status" };
