@@ -22,8 +22,17 @@ export function Header() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const { totalItems, isOpen, setIsOpen } = useCartContext();
   const { totalItems: wishlistCount } = useWishlistContext();
+  const [storeName, setStoreName] = useState(STORE_NAME);
 
   useEffect(() => {
+    import("@/actions/index").then((mod) => {
+      mod.getSettings().then((res) => {
+        if (res.success && res.data?.storeName) {
+          setStoreName(res.data.storeName);
+        }
+      });
+    });
+    
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
@@ -70,7 +79,7 @@ export function Header() {
             <Link href="/" className="flex-shrink-0 group" id="header-logo">
               <div className="text-center">
                 <h1 className="font-heading text-xl lg:text-2xl font-semibold tracking-tight text-foreground group-hover:text-brand transition-colors duration-300">
-                  TAYNA XAVIER
+                  {storeName}
                 </h1>
                 <p className="text-[10px] lg:text-xs tracking-[0.35em] uppercase text-muted-foreground -mt-0.5">
                   Boutique
@@ -199,7 +208,7 @@ export function Header() {
               <div className="flex items-center justify-between p-6 border-b border-border">
                 <div>
                   <h2 className="font-heading text-lg font-semibold tracking-tight">
-                    TAYNA XAVIER
+                    {storeName}
                   </h2>
                   <p className="text-[10px] tracking-[0.35em] uppercase text-muted-foreground">
                     Boutique

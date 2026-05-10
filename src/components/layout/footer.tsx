@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Mail, Phone, Heart } from "lucide-react";
 import { STORE_NAME, INSTAGRAM_URL, NAV_LINKS } from "@/lib/constants";
 import { toast } from "sonner";
+import { getSettings } from "@/actions/index";
 
 function InstagramIcon({ className }: { className?: string }) {
   return (
@@ -17,6 +18,27 @@ function InstagramIcon({ className }: { className?: string }) {
 export function Footer() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
+  const [settings, setSettings] = useState({
+    storeName: STORE_NAME,
+    whatsapp: "(00) 00000-0000",
+    instagram: INSTAGRAM_URL,
+    email: "contato@taynaxavier.com.br",
+  });
+
+  useEffect(() => {
+    async function fetchSettings() {
+      const res = await getSettings();
+      if (res.success && res.data) {
+        setSettings({
+          storeName: res.data.storeName || STORE_NAME,
+          whatsapp: res.data.whatsapp || "(00) 00000-0000",
+          instagram: res.data.instagram || INSTAGRAM_URL,
+          email: res.data.email || "contato@taynaxavier.com.br",
+        });
+      }
+    }
+    fetchSettings();
+  }, []);
 
   const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,11 +99,11 @@ export function Footer() {
               Curadoria exclusiva de peças que traduzem sofisticação e feminilidade.
             </p>
             <div className="flex gap-4">
-              <a href={INSTAGRAM_URL} target="_blank" rel="noopener noreferrer"
+              <a href={settings.instagram} target="_blank" rel="noopener noreferrer"
                 className="p-2.5 bg-white/10 rounded-xl hover:bg-brand transition-all duration-300" aria-label="Instagram">
                 <InstagramIcon className="w-4 h-4" />
               </a>
-              <a href="mailto:contato@taynaxavier.com.br"
+              <a href={`mailto:${settings.email}`}
                 className="p-2.5 bg-white/10 rounded-xl hover:bg-brand transition-all duration-300" aria-label="Email">
                 <Mail className="w-4 h-4" />
               </a>
@@ -112,11 +134,11 @@ export function Footer() {
             <ul className="space-y-4">
               <li className="flex items-start gap-3">
                 <Phone className="w-4 h-4 mt-0.5 text-brand" />
-                <div><p className="text-sm text-white/70">(00) 00000-0000</p><p className="text-xs text-white/40">WhatsApp</p></div>
+                <div><p className="text-sm text-white/70">{settings.whatsapp}</p><p className="text-xs text-white/40">WhatsApp</p></div>
               </li>
               <li className="flex items-start gap-3">
                 <Mail className="w-4 h-4 mt-0.5 text-brand" />
-                <p className="text-sm text-white/70">contato@taynaxavier.com.br</p>
+                <p className="text-sm text-white/70">{settings.email}</p>
               </li>
             </ul>
           </div>
@@ -125,7 +147,7 @@ export function Footer() {
       <div className="border-t border-white/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p className="text-xs text-white/40">© {new Date().getFullYear()} {STORE_NAME}. Todos os direitos reservados.</p>
+            <p className="text-xs text-white/40">© {new Date().getFullYear()} {settings.storeName}. Todos os direitos reservados.</p>
             <div className="flex items-center gap-1 text-xs text-white/40">
               Feito com <Heart className="w-3 h-3 text-brand mx-1 fill-brand" /> no Brasil
             </div>
