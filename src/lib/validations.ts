@@ -78,7 +78,7 @@ export const settingsSchema = z.object({
   storeName: z.string().min(3, "Nome da loja é obrigatório"),
   whatsapp: z.string().nullable().optional(),
   instagram: z.string().nullable().optional(),
-  email: z.string().email().nullable().optional(),
+  email: z.union([z.string().email("E-mail inválido"), z.literal("")]).nullable().optional(),
   address: z.string().nullable().optional(),
 });
 

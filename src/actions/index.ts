@@ -149,15 +149,23 @@ export async function getSettings() {
 export async function updateSettings(data: unknown) {
   try {
     const validated = settingsSchema.parse(data);
-    // update the first config
+    // Convert empty strings to null for optional fields
+    const sanitized = {
+      ...validated,
+      email: validated.email === "" ? null : validated.email,
+      whatsapp: validated.whatsapp === "" ? null : validated.whatsapp,
+      instagram: validated.instagram === "" ? null : validated.instagram,
+      address: validated.address === "" ? null : validated.address,
+    };
     const first = await prisma.settings.findFirst();
-    if(first) {
-      await prisma.settings.update({ where: { id: first.id }, data: validated });
+    if (first) {
+      await prisma.settings.update({ where: { id: first.id }, data: sanitized });
     } else {
-      await prisma.settings.create({ data: validated as any });
+      await prisma.settings.create({ data: sanitized as any });
     }
     return { success: true, message: "Configurações salvas" };
   } catch (error) {
+    console.error("updateSettings error:", error);
     return { success: false, message: "Erro ao salvar configurações" };
   }
 }
