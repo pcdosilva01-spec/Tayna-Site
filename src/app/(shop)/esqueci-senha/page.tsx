@@ -1,1 +1,8 @@
-export default function Page() { return (<div className="min-h-screen pt-32 pb-16 px-4 text-center"><h1 className="text-2xl font-bold mb-4 capitalize">esqueci senha</h1><p className="text-muted-foreground">Esta p·gina est· em construÁ„o.</p></div>); }
+export default function EsqueciSenhaPage() {
+  return (
+    <div className="min-h-screen pt-32 pb-16 px-4 text-center">
+      <h1 className="text-2xl font-bold mb-4 capitalize">Esqueci Senha</h1>
+      <p className="text-muted-foreground">Esta p√°gina est√° em constru√ß√£o.</p>
+    </div>
+  );
+}
