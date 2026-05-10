@@ -3,7 +3,7 @@
 import React from 'react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
-import { ShoppingBag, Heart, ArrowRight, Instagram } from 'lucide-react'
+import { ShoppingBag, Heart, ArrowRight } from 'lucide-react'
 import Image from 'next/image'
 
 const fadeInUp = {
@@ -20,6 +20,15 @@ const staggerContainer = {
 }
 
 export default function HomePageClient({ featuredProducts, categories }: { featuredProducts: any[], categories: any[] }) {
+  // SVG do Instagram Inline para evitar erro de barrel optimization
+  const InstagramIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect width="20" height="20" x="2" y="2" rx="5" ry="5"/>
+      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
+      <line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/>
+    </svg>
+  )
+
   return (
     <main className="w-full">
       {/* Navbar (Placeholder for context) */}
@@ -227,7 +236,7 @@ export default function HomePageClient({ featuredProducts, categories }: { featu
           <div>
             <h4 className="uppercase tracking-widest mb-4 font-medium">Social</h4>
             <a href="https://www.instagram.com/taynaxavier_boutique/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-light hover:text-[var(--color-text)] transition-colors">
-              <Instagram size={20} /> Instagram
+              <InstagramIcon /> Instagram
             </a>
           </div>
         </div>
