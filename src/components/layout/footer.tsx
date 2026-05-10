@@ -23,6 +23,7 @@ export function Footer() {
     whatsapp: "(00) 00000-0000",
     instagram: INSTAGRAM_URL,
     email: "contato@taynaxavier.com.br",
+    address: "",
   });
 
   useEffect(() => {
