@@ -5,7 +5,9 @@
 import { Resend } from "resend";
 import { orderConfirmationTemplate, welcomeEmailTemplate } from "@/emails/templates";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Use a fallback during build time to prevent the build from crashing
+// if environment variables are not yet loaded in Vercel.
+const resend = new Resend(process.env.RESEND_API_KEY || "re_dummy_key_for_build");
 
 export async function sendOrderConfirmationEmail(order: {
   customerName: string;
