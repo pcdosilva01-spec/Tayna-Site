@@ -3,16 +3,30 @@
 import { Search, Mail, ShoppingCart } from "lucide-react";
 import { formatPrice, formatDateShort } from "@/utils/format";
 
-const customers = [
-  { id: "1", name: "Maria Silva", email: "maria@email.com", orders: 5, spent: 2489.50, joined: "2025-01-15" },
-  { id: "2", name: "Ana Costa", email: "ana@email.com", orders: 3, spent: 1259.70, joined: "2025-02-20" },
-  { id: "3", name: "Julia Santos", email: "julia@email.com", orders: 8, spent: 4120.20, joined: "2024-11-05" },
-  { id: "4", name: "Carla Lima", email: "carla@email.com", orders: 2, spent: 749.80, joined: "2025-03-12" },
-  { id: "5", name: "Beatriz Oliveira", email: "bia@email.com", orders: 12, spent: 6890.00, joined: "2024-08-01" },
-  { id: "6", name: "Fernanda Rocha", email: "fer@email.com", orders: 1, spent: 289.90, joined: "2025-04-25" },
-];
+import { useState, useEffect } from "react";
+import { getCustomers } from "@/actions/admin";
+
+type CustomerType = { id: string; name: string; email: string; orders: number; spent: number; joined: string }[];
 
 export default function AdminCustomersPage() {
+  const [customers, setCustomers] = useState<CustomerType>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadData() {
+      const res = await getCustomers();
+      if (res.success && res.data) {
+        setCustomers(res.data);
+      }
+      setLoading(false);
+    }
+    loadData();
+  }, []);
+
+  if (loading) {
+    return <div className="flex justify-center items-center h-64"><p className="text-muted-foreground">Carregando clientes...</p></div>;
+  }
+
   return (
     <div className="space-y-6">
       <div>

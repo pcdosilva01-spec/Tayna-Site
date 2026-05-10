@@ -4,16 +4,30 @@ import { Search, Eye, ChevronDown } from "lucide-react";
 import { formatPrice, formatDateShort } from "@/utils/format";
 import { ORDER_STATUS_COLORS, ORDER_STATUS_LABELS, PAYMENT_STATUS_LABELS } from "@/lib/constants";
 
-const orders = [
-  { id: "ORD-001", customer: "Maria Silva", email: "maria@email.com", total: 459.90, payment: "PAID", status: "DELIVERED", date: "2025-05-10", items: 2 },
-  { id: "ORD-002", customer: "Ana Costa", email: "ana@email.com", total: 289.90, payment: "PAID", status: "SHIPPED", date: "2025-05-09", items: 1 },
-  { id: "ORD-003", customer: "Julia Santos", email: "julia@email.com", total: 379.90, payment: "PAID", status: "PROCESSING", date: "2025-05-09", items: 3 },
-  { id: "ORD-004", customer: "Carla Lima", email: "carla@email.com", total: 649.80, payment: "PENDING", status: "PENDING", date: "2025-05-08", items: 2 },
-  { id: "ORD-005", customer: "Beatriz Oliveira", email: "bia@email.com", total: 189.90, payment: "PAID", status: "DELIVERED", date: "2025-05-08", items: 1 },
-  { id: "ORD-006", customer: "Fernanda Rocha", email: "fer@email.com", total: 829.70, payment: "PAID", status: "PROCESSING", date: "2025-05-07", items: 4 },
-];
+import { useState, useEffect } from "react";
+import { getOrders } from "@/actions/admin";
+
+type OrderType = { id: string; customer: string; email: string; total: number; payment: string; status: string; date: string; items: number }[];
 
 export default function AdminOrdersPage() {
+  const [orders, setOrders] = useState<OrderType>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadData() {
+      const res = await getOrders();
+      if (res.success && res.data) {
+        setOrders(res.data as any);
+      }
+      setLoading(false);
+    }
+    loadData();
+  }, []);
+
+  if (loading) {
+    return <div className="flex justify-center items-center h-64"><p className="text-muted-foreground">Carregando pedidos...</p></div>;
+  }
+
   return (
     <div className="space-y-6">
       <div>

@@ -1,21 +1,39 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plus, Search, Edit, Trash2, Eye, Package } from "lucide-react";
 import Link from "next/link";
-import { SAMPLE_PRODUCTS } from "@/lib/sample-data";
+import { getProducts } from "@/actions/index";
 import { formatPrice } from "@/utils/format";
 
 export default function AdminProductsPage() {
   const [search, setSearch] = useState("");
-  const products = SAMPLE_PRODUCTS.filter(p => p.name.toLowerCase().includes(search.toLowerCase()));
+  const [allProducts, setAllProducts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadData() {
+      const res = await getProducts();
+      if (res.success && res.data) {
+        setAllProducts(res.data);
+      }
+      setLoading(false);
+    }
+    loadData();
+  }, []);
+
+  const products = allProducts.filter(p => p.name.toLowerCase().includes(search.toLowerCase()));
+
+  if (loading) {
+    return <div className="flex justify-center items-center h-64"><p className="text-muted-foreground">Carregando produtos...</p></div>;
+  }
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-heading font-bold">Produtos</h1>
-          <p className="text-sm text-muted-foreground">{SAMPLE_PRODUCTS.length} produtos cadastrados</p>
+          <p className="text-sm text-muted-foreground">{allProducts.length} produtos cadastrados</p>
         </div>
         <button className="flex items-center gap-2 px-5 py-2.5 bg-brand text-white rounded-xl text-sm font-medium hover:bg-brand/90 transition-colors">
           <Plus className="w-4 h-4" /> Novo Produto

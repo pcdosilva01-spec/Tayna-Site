@@ -3,14 +3,30 @@
 import { Plus, Edit, Trash2, Tag } from "lucide-react";
 import { formatDateShort } from "@/utils/format";
 
-const coupons = [
-  { id: "1", code: "BEMVINDA10", discount: 10, expiresAt: "2025-12-31", isActive: true, uses: 45 },
-  { id: "2", code: "VERAO20", discount: 20, expiresAt: "2025-06-30", isActive: true, uses: 23 },
-  { id: "3", code: "PRIMEIRACOMPRA", discount: 15, expiresAt: null, isActive: true, uses: 89 },
-  { id: "4", code: "FLASH30", discount: 30, expiresAt: "2025-05-15", isActive: false, uses: 12 },
-];
+import { useState, useEffect } from "react";
+import { getCoupons } from "@/actions/admin";
+
+type CouponType = { id: string; code: string; discount: number; expiresAt: string | null; isActive: boolean; uses: number }[];
 
 export default function AdminCouponsPage() {
+  const [coupons, setCoupons] = useState<CouponType>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadData() {
+      const res = await getCoupons();
+      if (res.success && res.data) {
+        setCoupons(res.data);
+      }
+      setLoading(false);
+    }
+    loadData();
+  }, []);
+
+  if (loading) {
+    return <div className="flex justify-center items-center h-64"><p className="text-muted-foreground">Carregando cupons...</p></div>;
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">

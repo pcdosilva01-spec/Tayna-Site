@@ -6,29 +6,43 @@ import Link from "next/link";
 import { formatPrice, formatDateShort } from "@/utils/format";
 import { ORDER_STATUS_COLORS, ORDER_STATUS_LABELS } from "@/lib/constants";
 
-const stats = [
-  { label: "Faturamento", value: "R$ 24.580,00", change: "+12.5%", up: true, icon: DollarSign },
-  { label: "Pedidos", value: "156", change: "+8.2%", up: true, icon: ShoppingCart },
-  { label: "Produtos", value: "48", change: "+3", up: true, icon: Package },
-  { label: "Clientes", value: "312", change: "+15.3%", up: true, icon: Users },
-];
+import { useState, useEffect } from "react";
+import { getDashboardData } from "@/actions/admin";
 
-const recentOrders = [
-  { id: "ORD-001", customer: "Maria Silva", total: 459.90, status: "DELIVERED", date: "2025-05-10" },
-  { id: "ORD-002", customer: "Ana Costa", total: 289.90, status: "SHIPPED", date: "2025-05-09" },
-  { id: "ORD-003", customer: "Julia Santos", total: 379.90, status: "PROCESSING", date: "2025-05-09" },
-  { id: "ORD-004", customer: "Carla Lima", total: 649.80, status: "PENDING", date: "2025-05-08" },
-  { id: "ORD-005", customer: "Beatriz Oliveira", total: 189.90, status: "DELIVERED", date: "2025-05-08" },
-];
-
-const topProducts = [
-  { name: "Vestido Midi Floral Rosa", sales: 32, revenue: 9276.80 },
-  { name: "Conjunto Cropped + Saia Linho", sales: 28, revenue: 10637.20 },
-  { name: "Calça Wide Leg Alfaiataria", sales: 24, revenue: 6237.60 },
-  { name: "Vestido Longo Festa Preto", sales: 18, revenue: 8278.20 },
-];
+// We will fetch these from the server
+// type definitions for the state
+type StatsType = { label: string; value: string; change: string; up: boolean; icon: any }[];
+type RecentOrderType = { id: string; customer: string; total: number; status: string; date: string }[];
+type TopProductType = { name: string; sales: number; revenue: number }[];
 
 export default function AdminDashboard() {
+  const [stats, setStats] = useState<StatsType>([]);
+  const [recentOrders, setRecentOrders] = useState<RecentOrderType>([]);
+  const [topProducts, setTopProducts] = useState<TopProductType>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadData() {
+      const res = await getDashboardData();
+      if (res.success && res.data) {
+        setStats([
+          { label: "Faturamento", value: formatPrice(res.data.stats.revenue), change: "", up: true, icon: DollarSign },
+          { label: "Pedidos", value: res.data.stats.orders.toString(), change: "", up: true, icon: ShoppingCart },
+          { label: "Produtos", value: res.data.stats.products.toString(), change: "", up: true, icon: Package },
+          { label: "Clientes", value: res.data.stats.customers.toString(), change: "", up: true, icon: Users },
+        ]);
+        setRecentOrders(res.data.recentOrders as any);
+        setTopProducts(res.data.topProducts);
+      }
+      setLoading(false);
+    }
+    loadData();
+  }, []);
+
+  if (loading) {
+    return <div className="flex justify-center items-center h-64"><p className="text-muted-foreground">Carregando dashboard...</p></div>;
+  }
+
   return (
     <div className="space-y-6">
       <div>
