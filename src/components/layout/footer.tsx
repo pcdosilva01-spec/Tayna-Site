@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { Mail, Phone, Heart } from "lucide-react";
+import { Mail, Phone, Heart, MapPin } from "lucide-react";
 import { STORE_NAME, INSTAGRAM_URL, NAV_LINKS } from "@/lib/constants";
 import { toast } from "sonner";
 import { getSettings } from "@/actions/index";
@@ -140,6 +140,12 @@ export function Footer() {
                 <Mail className="w-4 h-4 mt-0.5 text-brand" />
                 <p className="text-sm text-white/70">{settings.email}</p>
               </li>
+              {settings.address && (
+                <li className="flex items-start gap-3">
+                  <MapPin className="w-4 h-4 mt-0.5 text-brand shrink-0" />
+                  <p className="text-sm text-white/70 leading-relaxed">{settings.address}</p>
+                </li>
+              )}
             </ul>
           </div>
         </div>
