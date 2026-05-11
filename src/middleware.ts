@@ -8,13 +8,35 @@ export function middleware(request: NextRequest) {
 
   // Protect admin routes
   if (protectedPaths.some((path) => pathname.startsWith(path))) {
-    // TODO: Check session token from Auth.js
-    // For now, allow access in development
-    // In production, uncomment below:
-    // const token = request.cookies.get("authjs.session-token");
-    // if (!token) {
-    //   return NextResponse.redirect(new URL("/conta", request.url));
-    // }
+    const basicAuth = request.headers.get("authorization");
+    const adminPassword = process.env.ADMIN_PASSWORD;
+
+    if (!adminPassword) {
+      console.warn("Atenção: ADMIN_PASSWORD não configurada no .env");
+    }
+
+    let isAuthenticated = false;
+
+    if (basicAuth) {
+      try {
+        const authValue = basicAuth.split(" ")[1];
+        const [user, pwd] = atob(authValue).split(":");
+        if (adminPassword && pwd === adminPassword) {
+          isAuthenticated = true;
+        }
+      } catch (e) {
+        // Invalid base64
+      }
+    }
+
+    if (!isAuthenticated) {
+      return new NextResponse("Acesso Negado. Senha Incorreta.", {
+        status: 401,
+        headers: {
+          "WWW-Authenticate": 'Basic realm="Área Administrativa"',
+        },
+      });
+    }
   }
 
   // Security headers
