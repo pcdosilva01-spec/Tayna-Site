@@ -12,7 +12,8 @@ export async function adminLogin(password: string) {
     return { success: false, message: "Senha incorreta" };
   }
 
-  cookies().set("admin_auth", "true", {
+  const cookieStore = await cookies();
+  cookieStore.set("admin_auth", "true", {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
