@@ -26,6 +26,7 @@ export function CartDrawer() {
   };
 
   return (
+    <>
     <AnimatePresence>
       {isOpen && (
         <>
@@ -119,7 +120,7 @@ export function CartDrawer() {
     </AnimatePresence>
 
     {/* D - Login Prompt Modal */}
-    <AnimatePresence>
+    <AnimatePresence key="login-prompt">
       {showLoginPrompt && (
         <>
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
