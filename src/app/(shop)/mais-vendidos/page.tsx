@@ -2,10 +2,21 @@
 
 import { motion } from "framer-motion";
 import { ProductCard } from "@/components/shop/product-card";
-import { SAMPLE_PRODUCTS } from "@/lib/sample-data";
+import { getProducts } from "@/actions/index";
+import { useState, useEffect } from "react";
 
 export default function MaisVendidosPage() {
-  const featuredProducts = SAMPLE_PRODUCTS.filter(p => p.featured);
+  const [products, setProducts] = useState<any[]>([]);
+
+  useEffect(() => {
+    getProducts().then((res) => {
+      if (res.success && res.data) {
+        setProducts(res.data);
+      }
+    });
+  }, []);
+
+  const featuredProducts = products.filter(p => p.featured);
 
   return (
     <div className="bg-background min-h-screen">

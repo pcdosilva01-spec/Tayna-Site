@@ -5,7 +5,8 @@ import { ArrowRight, ShoppingBag, Sparkles, Truck, Shield, RotateCcw } from "luc
 import Link from "next/link";
 import { HeroSection } from "@/components/shop/hero-section";
 import { ProductCard } from "@/components/shop/product-card";
-import { SAMPLE_PRODUCTS, SAMPLE_CATEGORIES } from "@/lib/sample-data";
+import { getProducts, getCategories } from "@/actions/index";
+import { useState, useEffect } from "react";
 
 const fadeUp: any = {
   initial: { opacity: 0, y: 30 },
@@ -22,8 +23,16 @@ const stagger = {
 };
 
 export default function HomePage() {
-  const featuredProducts = SAMPLE_PRODUCTS.filter((p) => p.featured);
-  const newArrivals = SAMPLE_PRODUCTS.slice(0, 4);
+  const [products, setProducts] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
+
+  useEffect(() => {
+    getProducts().then((res) => setProducts(res.data || []));
+    getCategories().then((res) => setCategories(res.data || []));
+  }, []);
+
+  const featuredProducts = products.filter((p) => p.featured);
+  const newArrivals = products.slice(0, 4);
 
   return (
     <>
@@ -87,7 +96,7 @@ export default function HomePage() {
             <h2 className="font-heading text-3xl lg:text-4xl font-bold">Categorias</h2>
           </motion.div>
           <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
-            {SAMPLE_CATEGORIES.slice(0, 6).map((cat, i) => (
+            {categories.slice(0, 6).map((cat, i) => (
               <motion.div
                 key={cat.id}
                 initial={{ opacity: 0, y: 20 }}

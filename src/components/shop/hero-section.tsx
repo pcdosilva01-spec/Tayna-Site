@@ -4,19 +4,39 @@ import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
-import { HERO_SLIDES } from "@/lib/constants";
+import { getBanners } from "@/actions/admin";
 
 export function HeroSection() {
   const [current, setCurrent] = useState(0);
-  const slides = HERO_SLIDES;
+  const [slides, setSlides] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    getBanners().then((res) => {
+      if (res.success && res.data) {
+        const activeBanners = res.data.filter((b: any) => b.active && b.position === "Hero");
+        setSlides(activeBanners);
+      }
+      setLoading(false);
+    });
+  }, []);
 
   const next = useCallback(() => setCurrent((c) => (c + 1) % slides.length), [slides.length]);
   const prev = useCallback(() => setCurrent((c) => (c - 1 + slides.length) % slides.length), [slides.length]);
 
   useEffect(() => {
+    if (slides.length <= 1) return;
     const timer = setInterval(next, 6000);
     return () => clearInterval(timer);
-  }, [next]);
+  }, [next, slides.length]);
+
+  if (loading || slides.length === 0) {
+    return (
+      <section className="relative h-[85vh] lg:h-[90vh] overflow-hidden bg-secondary flex items-center justify-center">
+        <div className="absolute inset-0 bg-gradient-to-br from-brand-subtle via-secondary to-brand-muted" />
+      </section>
+    );
+  }
 
   return (
     <section className="relative h-[85vh] lg:h-[90vh] overflow-hidden bg-secondary" id="hero-section">
@@ -49,7 +69,7 @@ export function HeroSection() {
               className="max-w-xl"
             >
               <p className="text-xs tracking-[0.3em] uppercase text-white/70 mb-4 font-medium">
-                {slides[current].subtitle.split(" ").slice(0, 3).join(" ")}
+                {slides[current].subtitle ? slides[current].subtitle.split(" ").slice(0, 3).join(" ") : "Destaque"}
               </p>
               <h2 className="font-heading text-4xl sm:text-5xl lg:text-7xl font-bold text-white mb-4 leading-[0.95]">
                 {slides[current].title}
@@ -58,10 +78,10 @@ export function HeroSection() {
                 {slides[current].subtitle}
               </p>
               <Link
-                href={slides[current].href}
+                href={slides[current].link || "/novidades"}
                 className="inline-flex items-center gap-3 px-8 py-4 bg-white text-foreground rounded-2xl text-sm font-semibold hover:bg-brand hover:text-white transition-all duration-300 group"
               >
-                {slides[current].cta}
+                Ver Mais
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </Link>
             </motion.div>
