@@ -25,8 +25,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <div className="flex min-h-screen bg-secondary/30">
-      {/* Sidebar - Desktop */}
-      <aside className="hidden lg:flex flex-col w-64 bg-card border-r border-border">
+      {pathname === "/admin/login" ? (
+        <main className="flex-1 min-w-0">{children}</main>
+      ) : (
+        <>
+          {/* Sidebar - Desktop */}
+          <aside className="hidden lg:flex flex-col w-64 bg-card border-r border-border">
         <div className="p-6 border-b border-border">
           <Link href="/admin" className="block">
             <h1 className="font-heading text-lg font-bold tracking-tight">TAYNA XAVIER</h1>
@@ -104,9 +108,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </div>
         </header>
 
-        {/* Page Content */}
-        <main className="flex-1 p-4 lg:p-8">{children}</main>
-      </div>
+          </header>
+
+          {/* Page Content */}
+          <main className="flex-1 p-4 lg:p-8">{children}</main>
+        </div>
+        </>
+      )}
     </div>
   );
 }

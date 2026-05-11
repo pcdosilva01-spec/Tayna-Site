@@ -2,6 +2,26 @@
 
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
+
+// ─── Admin Auth ────────────────────────────────────────────────────────────────
+
+export async function adminLogin(password: string) {
+  const adminPassword = process.env.ADMIN_PASSWORD;
+  if (!adminPassword || password !== adminPassword) {
+    return { success: false, message: "Senha incorreta" };
+  }
+
+  cookies().set("admin_auth", "true", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: 60 * 60 * 24 * 7, // 7 days
+  });
+
+  return { success: true };
+}
 
 // ─── Dashboard ───────────────────────────────────────────────────────────────
 
