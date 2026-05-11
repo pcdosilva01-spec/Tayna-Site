@@ -12,7 +12,8 @@ export default function AdminSettingsPage() {
     whatsapp: "",
     instagram: "",
     email: "",
-    address: ""
+    address: "",
+    topBarText: ""
   });
 
   useEffect(() => {
@@ -24,7 +25,8 @@ export default function AdminSettingsPage() {
           whatsapp: res.data.whatsapp || "",
           instagram: res.data.instagram || "",
           email: res.data.email || "",
-          address: res.data.address || ""
+          address: res.data.address || "",
+          topBarText: res.data.topBarText || "Frete grátis para compras acima de R$ 299 ✦ Parcele em até 6x sem juros"
         });
       }
       setLoading(false);
@@ -63,6 +65,11 @@ export default function AdminSettingsPage() {
           <div>
             <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Nome da Loja</label>
             <input type="text" name="storeName" value={formData.storeName} onChange={handleChange}
+              className="w-full px-4 py-3 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/30" />
+          </div>
+          <div>
+            <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Texto da Barra de Anúncios do Topo</label>
+            <input type="text" name="topBarText" value={formData.topBarText} onChange={handleChange} placeholder="Ex: Frete grátis..."
               className="w-full px-4 py-3 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/30" />
           </div>
         </div>

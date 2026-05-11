@@ -23,12 +23,14 @@ export function Header() {
   const { totalItems, isOpen, setIsOpen } = useCartContext();
   const { totalItems: wishlistCount } = useWishlistContext();
   const [storeName, setStoreName] = useState(STORE_NAME);
+  const [topBarText, setTopBarText] = useState("Frete grátis para compras acima de R$ 299 ✦ Parcele em até 6x sem juros");
 
   useEffect(() => {
     import("@/actions/index").then((mod) => {
       mod.getSettings().then((res) => {
-        if (res.success && res.data?.storeName) {
-          setStoreName(res.data.storeName);
+        if (res.success && res.data) {
+          if (res.data.storeName) setStoreName(res.data.storeName);
+          if (res.data.topBarText) setTopBarText(res.data.topBarText);
         }
       });
     });
@@ -52,9 +54,11 @@ export function Header() {
   return (
     <>
       {/* Announcement Bar */}
-      <div className="bg-primary text-primary-foreground text-center py-2 px-4 text-xs tracking-[0.2em] uppercase font-medium">
-        Frete grátis para compras acima de R$ 299 ✦ Parcele em até 6x sem juros
-      </div>
+      {topBarText && topBarText.trim() !== "" && (
+        <div className="bg-primary text-primary-foreground text-center py-2 px-4 text-xs tracking-[0.2em] uppercase font-medium">
+          {topBarText}
+        </div>
+      )}
 
       <header
         className={`sticky top-0 z-50 transition-all duration-500 ${

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { ShoppingBag, Lock, ArrowLeft, ArrowRight, Check, Loader2 } from "lucide-react";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 import { useCartContext } from "@/components/shared/store-provider";
 import { formatPrice } from "@/utils/format";
 import { BRAZIL_STATES } from "@/lib/constants";
@@ -21,10 +22,16 @@ const maskExpiry = (v: string) => v.replace(/\D/g, "").replace(/(\d{2})(\d)/, "$
 
 export default function CheckoutPage() {
   const { items, subtotal, clearCart } = useCartContext();
+  const { data: session, status } = useSession();
   const [step, setStep] = useState<Step>("info");
   const [paymentMethod, setPaymentMethod] = useState<"card" | "pix">("card");
 
-  const [personalInfo, setPersonalInfo] = useState({ name: "", email: "", phone: "", cpf: "" });
+  const [personalInfo, setPersonalInfo] = useState({ 
+    name: session?.user?.name || "", 
+    email: session?.user?.email || "", 
+    phone: "", 
+    cpf: "" 
+  });
   const [address, setAddress] = useState({ cep: "", street: "", number: "", complement: "", city: "", state: "" });
   const [loading, setLoading] = useState(false);
 
@@ -133,6 +140,36 @@ export default function CheckoutPage() {
             Ver Produtos
           </Link>
         </div>
+      </div>
+    );
+  }
+
+  if (status === "loading") {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-brand" />
+      </div>
+    );
+  }
+
+  if (status === "unauthenticated") {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-4 bg-background">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center max-w-md">
+          <Lock className="w-16 h-16 text-muted-foreground/20 mx-auto mb-4" />
+          <h2 className="font-heading text-2xl font-bold mb-2">Faça Login para Comprar</h2>
+          <p className="text-sm text-muted-foreground mb-8">
+            Para garantir a segurança da sua compra, você precisa estar logado na sua conta.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link href="/conta" className="px-6 py-3.5 bg-brand text-white rounded-xl font-semibold hover:bg-brand/90 transition-colors">
+              Fazer Login
+            </Link>
+            <Link href="/cadastro" className="px-6 py-3.5 bg-secondary text-foreground rounded-xl font-semibold hover:bg-secondary/80 transition-colors">
+              Criar Conta
+            </Link>
+          </div>
+        </motion.div>
       </div>
     );
   }

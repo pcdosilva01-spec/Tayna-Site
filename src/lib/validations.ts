@@ -80,6 +80,7 @@ export const settingsSchema = z.object({
   instagram: z.string().nullable().optional(),
   email: z.union([z.string().email("E-mail inválido"), z.literal("")]).nullable().optional(),
   address: z.string().nullable().optional(),
+  topBarText: z.string().nullable().optional(),
 });
 
 // Types derived from schemas
