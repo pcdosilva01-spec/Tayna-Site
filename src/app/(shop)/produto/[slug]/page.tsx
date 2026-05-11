@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { Heart, ShoppingBag, Minus, Plus, Truck, Shield, RotateCcw, ChevronRight, Star } from "lucide-react";
 import Link from "next/link";
-import { SAMPLE_PRODUCTS } from "@/lib/sample-data";
+import { getProductBySlug, getProducts } from "@/actions/index";
 import { ProductCard } from "@/components/shop/product-card";
 import { useCartContext, useWishlistContext } from "@/components/shared/store-provider";
 import { formatPrice, calculateDiscount } from "@/utils/format";
@@ -14,8 +14,25 @@ import { SIZES } from "@/lib/constants";
 export default function ProductPage() {
   const params = useParams();
   const slug = params?.slug as string;
-  const product = SAMPLE_PRODUCTS.find((p) => p.slug === slug) || SAMPLE_PRODUCTS[0];
-  const related = SAMPLE_PRODUCTS.filter((p) => p.id !== product.id).slice(0, 4);
+  
+  const [product, setProduct] = useState<any>(null);
+  const [related, setRelated] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!slug) return;
+    getProductBySlug(slug).then((res) => {
+      if (res.success && res.data) {
+        setProduct(res.data);
+        getProducts(res.data.category?.slug).then((relRes) => {
+          if (relRes.success && relRes.data) {
+            setRelated(relRes.data.filter((p: any) => p.id !== res.data.id).slice(0, 4));
+          }
+        });
+      }
+      setLoading(false);
+    });
+  }, [slug]);
 
   const [selectedSize, setSelectedSize] = useState<string>("");
   const [quantity, setQuantity] = useState(1);
@@ -23,11 +40,19 @@ export default function ProductPage() {
 
   const { addItem } = useCartContext();
   const { isInWishlist, toggleWishlist } = useWishlistContext();
-  const discount = product.comparePrice ? calculateDiscount(product.price, product.comparePrice) : 0;
+  const discount = product?.comparePrice ? calculateDiscount(product.price, product.comparePrice) : 0;
 
   const handleAddToCart = () => {
-    addItem(product, quantity, selectedSize);
+    if (product) addItem(product, quantity, selectedSize);
   };
+
+  if (loading) {
+    return <div className="min-h-screen flex items-center justify-center"><p className="text-muted-foreground">Carregando produto...</p></div>;
+  }
+
+  if (!product) {
+    return <div className="min-h-screen flex items-center justify-center"><p className="text-muted-foreground">Produto não encontrado.</p></div>;
+  }
 
   return (
     <div className="bg-background">
@@ -55,7 +80,11 @@ export default function ProductPage() {
           <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6 }}>
             <div className="aspect-[3/4] rounded-3xl overflow-hidden bg-gradient-to-br from-brand-subtle to-secondary relative">
               <div className="w-full h-full flex items-center justify-center">
-                <ShoppingBag className="w-20 h-20 text-muted-foreground/15" />
+                {product.images && product.images[0] ? (
+                  <img src={product.images[0]} alt={product.name} className="w-full h-full object-cover" />
+                ) : (
+                  <ShoppingBag className="w-20 h-20 text-muted-foreground/15" />
+                )}
               </div>
               {discount > 0 && (
                 <span className="absolute top-4 left-4 px-3 py-1.5 bg-brand text-white text-xs font-semibold rounded-xl">
@@ -64,15 +93,15 @@ export default function ProductPage() {
               )}
             </div>
             {/* Thumbnails */}
-            <div className="grid grid-cols-4 gap-3 mt-3">
-              {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="aspect-square rounded-xl overflow-hidden bg-secondary cursor-pointer border-2 border-transparent hover:border-brand transition-colors">
-                  <div className="w-full h-full flex items-center justify-center">
-                    <ShoppingBag className="w-4 h-4 text-muted-foreground/20" />
+            {product.images && product.images.length > 0 && (
+              <div className="grid grid-cols-4 gap-3 mt-3">
+                {product.images.map((img: string, i: number) => (
+                  <div key={i} className="aspect-square rounded-xl overflow-hidden bg-secondary cursor-pointer border-2 border-transparent hover:border-brand transition-colors">
+                    <img src={img} alt={`Thumb ${i}`} className="w-full h-full object-cover" />
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </motion.div>
 
           {/* Info */}
