@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { Heart, ShoppingBag, Minus, Plus, Truck, Shield, RotateCcw, ChevronRight, Star } from "lucide-react";
