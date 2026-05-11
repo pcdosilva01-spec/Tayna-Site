@@ -2,21 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { Plus, Trash2, Image as ImageIcon, ToggleLeft, ToggleRight, X } from "lucide-react";
+import { getBanners, createBanner, toggleBanner, deleteBanner } from "@/actions/admin";
+import { toast } from "sonner";
 
-type Banner = { id: string; title: string; subtitle: string; link: string; position: string; active: boolean };
-
-const STORAGE_KEY = "tayna_banners";
-
-function loadBanners(): Banner[] {
-  if (typeof window === "undefined") return [];
-  try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-  } catch { return []; }
-}
-
-function saveBanners(banners: Banner[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(banners));
-}
+type Banner = { id: string; title: string; subtitle: string | null; link: string | null; position: string; active: boolean };
 
 const emptyForm = { title: "", subtitle: "", link: "", position: "Hero" };
 
@@ -25,36 +14,60 @@ export default function AdminBannersPage() {
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => { setBanners(loadBanners()); }, []);
+  const loadBanners = async () => {
+    const res = await getBanners();
+    if (res.success && res.data) {
+      setBanners(res.data);
+    }
+    setLoading(false);
+  };
 
-  const handleAdd = () => {
+  useEffect(() => {
+    loadBanners();
+  }, []);
+
+  const handleAdd = async () => {
     setSaving(true);
-    const newBanner: Banner = {
-      id: Date.now().toString(),
-      ...form,
-      active: true,
-    };
-    const updated = [newBanner, ...banners];
-    setBanners(updated);
-    saveBanners(updated);
-    setForm(emptyForm);
-    setShowModal(false);
+    const res = await createBanner({ ...form, active: true });
+    if (res.success && res.data) {
+      toast.success("Banner criado com sucesso");
+      setBanners([res.data as Banner, ...banners]);
+      setForm(emptyForm);
+      setShowModal(false);
+    } else {
+      toast.error(res.message || "Erro ao criar banner");
+    }
     setSaving(false);
   };
 
-  const handleToggle = (id: string) => {
-    const updated = banners.map(b => b.id === id ? { ...b, active: !b.active } : b);
-    setBanners(updated);
-    saveBanners(updated);
+  const handleToggle = async (id: string, active: boolean) => {
+    const prev = [...banners];
+    setBanners(banners.map((b) => (b.id === id ? { ...b, active: !active } : b)));
+    const res = await toggleBanner(id, !active);
+    if (!res.success) {
+      toast.error(res.message);
+      setBanners(prev);
+    }
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (!confirm("Excluir este banner?")) return;
-    const updated = banners.filter(b => b.id !== id);
-    setBanners(updated);
-    saveBanners(updated);
+    const prev = [...banners];
+    setBanners(banners.filter((b) => b.id !== id));
+    const res = await deleteBanner(id);
+    if (!res.success) {
+      toast.error(res.message);
+      setBanners(prev);
+    } else {
+      toast.success("Banner excluído");
+    }
   };
+
+  if (loading) {
+    return <div className="p-8 text-center text-muted-foreground">Carregando banners...</div>;
+  }
 
   return (
     <div className="space-y-6">
@@ -95,7 +108,7 @@ export default function AdminBannersPage() {
                     {banner.active ? "Ativo" : "Inativo"}
                   </span>
                   <button
-                    onClick={() => handleToggle(banner.id)}
+                    onClick={() => handleToggle(banner.id, banner.active)}
                     className="p-1.5 hover:bg-secondary rounded-lg transition-colors"
                     title={banner.active ? "Desativar" : "Ativar"}
                   >

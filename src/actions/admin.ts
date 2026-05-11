@@ -261,3 +261,54 @@ export async function deleteProduct(id: string) {
     return { success: false, message: "Erro ao excluir produto" };
   }
 }
+
+// ─── Banners ──────────────────────────────────────────────────────────────────
+
+export async function getBanners() {
+  try {
+    const banners = await prisma.banner.findMany({ orderBy: { createdAt: "desc" } });
+    return { success: true, data: banners };
+  } catch (error) {
+    console.error("getBanners error:", error);
+    return { success: false, message: "Erro ao buscar banners" };
+  }
+}
+
+export async function createBanner(data: {
+  title: string;
+  subtitle?: string;
+  link?: string;
+  position: string;
+  active: boolean;
+}) {
+  try {
+    const banner = await prisma.banner.create({ data });
+    revalidatePath("/admin/banners");
+    return { success: true, data: banner };
+  } catch (error) {
+    console.error("createBanner error:", error);
+    return { success: false, message: "Erro ao criar banner" };
+  }
+}
+
+export async function toggleBanner(id: string, active: boolean) {
+  try {
+    await prisma.banner.update({ where: { id }, data: { active } });
+    revalidatePath("/admin/banners");
+    return { success: true };
+  } catch (error) {
+    console.error("toggleBanner error:", error);
+    return { success: false, message: "Erro ao atualizar banner" };
+  }
+}
+
+export async function deleteBanner(id: string) {
+  try {
+    await prisma.banner.delete({ where: { id } });
+    revalidatePath("/admin/banners");
+    return { success: true };
+  } catch (error) {
+    console.error("deleteBanner error:", error);
+    return { success: false, message: "Erro ao excluir banner" };
+  }
+}
