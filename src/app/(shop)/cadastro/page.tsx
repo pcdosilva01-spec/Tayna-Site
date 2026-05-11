@@ -44,7 +44,7 @@ export default function CadastroPage() {
         toast.error("Conta criada, mas houve um erro no login automático.");
       } else {
         toast.success("Conta criada com sucesso!");
-        router.push("/admin");
+        router.push("/");
         router.refresh();
       }
     } catch (error) {
@@ -55,7 +55,7 @@ export default function CadastroPage() {
   };
 
   const handleGoogleRegister = () => {
-    signIn("google", { callbackUrl: "/admin" });
+    signIn("google", { callbackUrl: "/" });
   };
 
   return (

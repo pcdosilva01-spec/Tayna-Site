@@ -31,7 +31,7 @@ export default function LoginPage() {
         toast.error("E-mail ou senha incorretos");
       } else {
         toast.success("Login realizado com sucesso!");
-        router.push("/admin"); // Or profile page if normal user
+        router.push("/"); // Changed from /admin to prevent normal users hitting Basic Auth
         router.refresh();
       }
     } catch (error) {
@@ -42,7 +42,7 @@ export default function LoginPage() {
   };
 
   const handleGoogleLogin = () => {
-    signIn("google", { callbackUrl: "/admin" });
+    signIn("google", { callbackUrl: "/" });
   };
 
   return (
