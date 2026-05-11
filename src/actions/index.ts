@@ -252,3 +252,49 @@ export async function updateSettings(data: unknown) {
     return { success: false, message: `Erro: ${msg}` };
   }
 }
+
+// E - User Orders
+export async function getUserOrders(userId: string) {
+  try {
+    const orders = await prisma.order.findMany({
+      where: { userId },
+      orderBy: { createdAt: "desc" },
+      include: { items: { include: { product: { select: { name: true, images: true } } } } },
+    });
+    return { success: true, data: orders };
+  } catch (error) {
+    console.error("getUserOrders error:", error);
+    return { success: false, message: "Erro ao buscar pedidos" };
+  }
+}
+
+// F - Wishlist DB actions
+export async function getWishlist(userId: string) {
+  try {
+    const items = await prisma.wishlist.findMany({
+      where: { userId },
+      include: { product: { include: { category: true } } },
+      orderBy: { createdAt: "desc" },
+    });
+    return { success: true, data: items };
+  } catch (error) {
+    return { success: false, message: "Erro ao buscar favoritos" };
+  }
+}
+
+export async function toggleWishlist(userId: string, productId: string) {
+  try {
+    const existing = await prisma.wishlist.findUnique({
+      where: { userId_productId: { userId, productId } },
+    });
+    if (existing) {
+      await prisma.wishlist.delete({ where: { userId_productId: { userId, productId } } });
+      return { success: true, action: "removed" };
+    } else {
+      await prisma.wishlist.create({ data: { userId, productId } });
+      return { success: true, action: "added" };
+    }
+  } catch (error) {
+    return { success: false, message: "Erro ao atualizar favoritos" };
+  }
+}

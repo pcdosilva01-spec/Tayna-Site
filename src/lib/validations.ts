@@ -81,6 +81,8 @@ export const settingsSchema = z.object({
   email: z.union([z.string().email("E-mail inválido"), z.literal("")]).nullable().optional(),
   address: z.string().nullable().optional(),
   topBarText: z.string().nullable().optional(),
+  freeShippingMin: z.number().nullable().optional(),
+  installments: z.number().int().nullable().optional(),
 });
 
 // Types derived from schemas

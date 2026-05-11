@@ -15,15 +15,18 @@ import {
 import { NAV_LINKS, STORE_NAME } from "@/lib/constants";
 import { useCartContext, useWishlistContext } from "@/components/shared/store-provider";
 import { CartDrawer } from "@/components/shop/cart-drawer";
+import { useSession, signOut } from "next-auth/react";
 
 export function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
   const { totalItems, isOpen, setIsOpen } = useCartContext();
   const { totalItems: wishlistCount } = useWishlistContext();
   const [storeName, setStoreName] = useState(STORE_NAME);
   const [topBarText, setTopBarText] = useState("Frete grátis para compras acima de R$ 299 ✦ Parcele em até 6x sem juros");
+  const { data: session } = useSession();
 
   useEffect(() => {
     import("@/actions/index").then((mod) => {
@@ -117,14 +120,52 @@ export function Header() {
                 <Search className="w-5 h-5" />
               </button>
 
-              <Link
-                href="/conta"
-                className="hidden sm:flex p-2 text-foreground/70 hover:text-foreground transition-colors"
-                aria-label="Minha conta"
-                id="account-btn"
-              >
-                <User className="w-5 h-5" />
-              </Link>
+              {/* C - User Avatar (changes when logged in) */}
+              {session ? (
+                <div className="relative hidden sm:block">
+                  <button
+                    onClick={() => setShowUserMenu(!showUserMenu)}
+                    className="flex items-center gap-2 p-1.5 rounded-xl hover:bg-secondary transition-colors"
+                    aria-label="Minha conta"
+                  >
+                    <div className="w-7 h-7 rounded-full bg-brand text-white flex items-center justify-center text-xs font-bold">
+                      {session.user?.name?.[0]?.toUpperCase() || "U"}
+                    </div>
+                  </button>
+                  <AnimatePresence>
+                    {showUserMenu && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 8, scale: 0.95 }}
+                        className="absolute right-0 top-full mt-2 w-48 bg-card border border-border rounded-2xl shadow-xl p-2 z-50"
+                      >
+                        <div className="px-3 py-2 border-b border-border mb-1">
+                          <p className="text-xs font-semibold truncate">{session.user?.name}</p>
+                          <p className="text-[10px] text-muted-foreground truncate">{session.user?.email}</p>
+                        </div>
+                        <Link href="/conta" onClick={() => setShowUserMenu(false)}
+                          className="flex items-center gap-2 px-3 py-2 text-sm rounded-xl hover:bg-secondary transition-colors">
+                          <User className="w-3.5 h-3.5" /> Minha Conta
+                        </Link>
+                        <button onClick={() => signOut({ callbackUrl: "/" })}
+                          className="flex items-center gap-2 px-3 py-2 text-sm rounded-xl hover:bg-secondary transition-colors w-full text-left text-destructive">
+                          Sair da Conta
+                        </button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              ) : (
+                <Link
+                  href="/conta"
+                  className="hidden sm:flex p-2 text-foreground/70 hover:text-foreground transition-colors"
+                  aria-label="Minha conta"
+                  id="account-btn"
+                >
+                  <User className="w-5 h-5" />
+                </Link>
+              )}
 
               <Link
                 href="/favoritos"

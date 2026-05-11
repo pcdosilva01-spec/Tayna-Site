@@ -1,14 +1,29 @@
 "use client";
 
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Minus, Plus, ShoppingBag, ArrowRight } from "lucide-react";
+import { X, Minus, Plus, ShoppingBag, ArrowRight, Lock, User } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useCartContext } from "@/components/shared/store-provider";
 import { formatPrice } from "@/utils/format";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 export function CartDrawer() {
   const { items, isOpen, setIsOpen, removeItem, updateQuantity, subtotal, totalItems } = useCartContext();
+  const { data: session } = useSession();
+  const router = useRouter();
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+
+  const handleCheckout = () => {
+    if (!session) {
+      setShowLoginPrompt(true);
+    } else {
+      setIsOpen(false);
+      router.push("/checkout");
+    }
+  };
 
   return (
     <AnimatePresence>
@@ -88,10 +103,10 @@ export function CartDrawer() {
                   <span className="text-lg font-semibold">{formatPrice(subtotal)}</span>
                 </div>
                 <p className="text-xs text-muted-foreground">Frete calculado no checkout</p>
-                <Link href="/checkout" onClick={() => setIsOpen(false)}
+                <button onClick={handleCheckout}
                   className="flex items-center justify-center gap-2 w-full py-3.5 bg-brand text-white rounded-2xl font-medium text-sm hover:bg-brand/90 transition-colors">
                   Finalizar Compra <ArrowRight className="w-4 h-4" />
-                </Link>
+                </button>
                 <button onClick={() => setIsOpen(false)}
                   className="w-full py-3 text-sm text-muted-foreground hover:text-foreground transition-colors text-center">
                   Continuar Comprando
@@ -102,5 +117,45 @@ export function CartDrawer() {
         </>
       )}
     </AnimatePresence>
-  );
+
+    {/* D - Login Prompt Modal */}
+    <AnimatePresence>
+      {showLoginPrompt && (
+        <>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm" onClick={() => setShowLoginPrompt(false)} />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+            className="fixed inset-0 z-[110] flex items-center justify-center p-4"
+          >
+            <div className="bg-background border border-border rounded-3xl p-8 max-w-sm w-full shadow-2xl text-center">
+              <div className="w-16 h-16 rounded-full bg-brand/10 flex items-center justify-center mx-auto mb-4">
+                <Lock className="w-8 h-8 text-brand" />
+              </div>
+              <h3 className="font-heading text-xl font-bold mb-2">Faça Login para Comprar</h3>
+              <p className="text-sm text-muted-foreground mb-6">
+                Acesse sua conta ou crie uma nova para finalizar sua compra com segurança.
+              </p>
+              <div className="space-y-3">
+                <Link href="/conta" onClick={() => { setShowLoginPrompt(false); setIsOpen(false); }}
+                  className="flex items-center justify-center gap-2 w-full py-3.5 bg-brand text-white rounded-xl font-semibold text-sm hover:bg-brand/90 transition-colors">
+                  <User className="w-4 h-4" /> Fazer Login
+                </Link>
+                <Link href="/cadastro" onClick={() => { setShowLoginPrompt(false); setIsOpen(false); }}
+                  className="flex items-center justify-center gap-2 w-full py-3.5 bg-secondary text-foreground rounded-xl font-semibold text-sm hover:bg-secondary/80 transition-colors">
+                  Criar Conta Grátis
+                </Link>
+                <button onClick={() => setShowLoginPrompt(false)}
+                  className="w-full py-2 text-xs text-muted-foreground hover:text-foreground transition-colors">
+                  Continuar navegando
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  </>);
 }

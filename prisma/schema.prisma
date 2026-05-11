@@ -155,6 +155,8 @@ model Settings {
   email       String?
   address     String?
   topBarText  String?  @default("Frete grátis para compras acima de R$ 299 ✦ Parcele em até 6x sem juros")
+  freeShippingMin Float? @default(299)
+  installments Int?     @default(6)
   updatedAt   DateTime @updatedAt
 }
 
