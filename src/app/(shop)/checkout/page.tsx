@@ -8,7 +8,7 @@ import { useCartContext } from "@/components/shared/store-provider";
 import { formatPrice } from "@/utils/format";
 import { BRAZIL_STATES } from "@/lib/constants";
 import { toast } from "sonner";
-import { createOrder } from "@/actions";
+import { createOrder, validateAndLockCoupon, lockCoupon } from "@/actions";
 
 type Step = "info" | "payment" | "confirmation";
 
@@ -22,11 +22,16 @@ export default function CheckoutPage() {
   const { items, subtotal, clearCart } = useCartContext();
   const [step, setStep] = useState<Step>("info");
   const [paymentMethod, setPaymentMethod] = useState<"card" | "pix">("card");
-  
+
   const [personalInfo, setPersonalInfo] = useState({ name: "", email: "", phone: "", cpf: "" });
   const [address, setAddress] = useState({ cep: "", street: "", number: "", complement: "", city: "", state: "" });
   const [card, setCard] = useState({ number: "", expiry: "", cvv: "", name: "" });
   const [loading, setLoading] = useState(false);
+
+  // Coupon state
+  const [couponCode, setCouponCode] = useState("");
+  const [couponLoading, setCouponLoading] = useState(false);
+  const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discount: number } | null>(null);
 
   const handleCepBlur = async () => {
     const cepDigits = address.cep.replace(/\D/g, "");
@@ -39,11 +44,11 @@ export default function CheckoutPage() {
           ...prev,
           street: data.logradouro,
           city: data.localidade,
-          state: data.uf
+          state: data.uf,
         }));
         toast.success("Endereço preenchido!");
       }
-    } catch (err) {
+    } catch {
       toast.error("Erro ao buscar CEP");
     }
   };
@@ -64,6 +69,40 @@ export default function CheckoutPage() {
     if (validateInfo()) setStep("payment");
   };
 
+  /** Apply coupon — validates code against the customer's email/CPF/phone */
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim()) return toast.error("Digite um cupom");
+    if (!personalInfo.email || !personalInfo.cpf || !personalInfo.phone) {
+      toast.error("Preencha seus dados pessoais antes de aplicar o cupom");
+      return;
+    }
+    setCouponLoading(true);
+    try {
+      const res = await validateAndLockCoupon({
+        code: couponCode.trim().toUpperCase(),
+        email: personalInfo.email,
+        cpf: personalInfo.cpf,
+        phone: personalInfo.phone,
+      });
+      if (!res.success) {
+        toast.error(res.message || "Cupom inválido");
+        setAppliedCoupon(null);
+        return;
+      }
+      setAppliedCoupon({ code: res.data!.code, discount: res.data!.discount });
+      toast.success(`Cupom aplicado! ${res.data!.discount}% de desconto`);
+    } catch {
+      toast.error("Erro ao aplicar cupom");
+    } finally {
+      setCouponLoading(false);
+    }
+  };
+
+  const removeCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponCode("");
+  };
+
   const handleConfirmOrder = async () => {
     if (paymentMethod === "card") {
       if (!card.number || !card.expiry || !card.cvv || !card.name) {
@@ -73,23 +112,33 @@ export default function CheckoutPage() {
     }
     setLoading(true);
     try {
+      // Lock the coupon (bind identifiers) before completing the order
+      if (appliedCoupon) {
+        await lockCoupon({
+          code: appliedCoupon.code,
+          email: personalInfo.email,
+          cpf: personalInfo.cpf,
+          phone: personalInfo.phone,
+        });
+      }
       await createOrder({
         customerName: personalInfo.name,
         customerEmail: personalInfo.email,
-        total
+        total,
       });
       setStep("confirmation");
       clearCart();
       toast.success("Pedido confirmado com sucesso!");
-    } catch (e) {
+    } catch {
       toast.error("Houve um problema ao finalizar o pedido");
     } finally {
       setLoading(false);
     }
   };
 
-  const shipping = subtotal >= 299 ? 0 : 19.90;
-  const total = subtotal + shipping;
+  const shipping = subtotal >= 299 ? 0 : 19.9;
+  const discountAmount = appliedCoupon ? (subtotal * appliedCoupon.discount) / 100 : 0;
+  const total = subtotal + shipping - discountAmount;
 
   if (items.length === 0 && step !== "confirmation") {
     return (
@@ -131,13 +180,20 @@ export default function CheckoutPage() {
             { key: "confirmation", label: "Confirmação" },
           ].map((s, i) => (
             <div key={s.key} className="flex items-center gap-2">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold ${
-                step === s.key ? "bg-brand text-white" : 
-                (s.key === "info" && step !== "info") || (s.key === "payment" && step === "confirmation") 
-                  ? "bg-green-100 text-green-700" : "bg-secondary text-muted-foreground"
-              }`}>
-                {(s.key === "info" && step !== "info") || (s.key === "payment" && step === "confirmation")
-                  ? <Check className="w-4 h-4" /> : i + 1}
+              <div
+                className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold ${
+                  step === s.key
+                    ? "bg-brand text-white"
+                    : (s.key === "info" && step !== "info") || (s.key === "payment" && step === "confirmation")
+                    ? "bg-green-100 text-green-700"
+                    : "bg-secondary text-muted-foreground"
+                }`}
+              >
+                {(s.key === "info" && step !== "info") || (s.key === "payment" && step === "confirmation") ? (
+                  <Check className="w-4 h-4" />
+                ) : (
+                  i + 1
+                )}
               </div>
               <span className={`text-xs font-medium hidden sm:block ${step === s.key ? "text-foreground" : "text-muted-foreground"}`}>
                 {s.label}
@@ -154,41 +210,118 @@ export default function CheckoutPage() {
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
                 <h2 className="font-heading text-lg font-semibold">Informações Pessoais</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div><label className="text-xs font-medium text-muted-foreground mb-1.5 block">Nome Completo *</label>
-                    <input type="text" value={personalInfo.name} onChange={e => setPersonalInfo({...personalInfo, name: e.target.value})} className="w-full px-4 py-3 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-all" /></div>
-                  <div><label className="text-xs font-medium text-muted-foreground mb-1.5 block">E-mail *</label>
-                    <input type="email" value={personalInfo.email} onChange={e => setPersonalInfo({...personalInfo, email: e.target.value})} className="w-full px-4 py-3 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-all" /></div>
-                  <div><label className="text-xs font-medium text-muted-foreground mb-1.5 block">Telefone *</label>
-                    <input type="tel" value={personalInfo.phone} onChange={e => setPersonalInfo({...personalInfo, phone: maskPhone(e.target.value)})} maxLength={15} placeholder="(00) 00000-0000" className="w-full px-4 py-3 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-all" /></div>
-                  <div><label className="text-xs font-medium text-muted-foreground mb-1.5 block">CPF *</label>
-                    <input type="text" value={personalInfo.cpf} onChange={e => setPersonalInfo({...personalInfo, cpf: maskCPF(e.target.value)})} maxLength={14} placeholder="000.000.000-00" className="w-full px-4 py-3 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-all" /></div>
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Nome Completo *</label>
+                    <input
+                      type="text"
+                      value={personalInfo.name}
+                      onChange={(e) => setPersonalInfo({ ...personalInfo, name: e.target.value })}
+                      className="w-full px-4 py-3 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-all"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground mb-1.5 block">E-mail *</label>
+                    <input
+                      type="email"
+                      value={personalInfo.email}
+                      onChange={(e) => setPersonalInfo({ ...personalInfo, email: e.target.value })}
+                      className="w-full px-4 py-3 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-all"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Telefone *</label>
+                    <input
+                      type="tel"
+                      value={personalInfo.phone}
+                      onChange={(e) => setPersonalInfo({ ...personalInfo, phone: maskPhone(e.target.value) })}
+                      maxLength={15}
+                      placeholder="(00) 00000-0000"
+                      className="w-full px-4 py-3 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-all"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground mb-1.5 block">CPF *</label>
+                    <input
+                      type="text"
+                      value={personalInfo.cpf}
+                      onChange={(e) => setPersonalInfo({ ...personalInfo, cpf: maskCPF(e.target.value) })}
+                      maxLength={14}
+                      placeholder="000.000.000-00"
+                      className="w-full px-4 py-3 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-all"
+                    />
+                  </div>
                 </div>
+
                 <h2 className="font-heading text-lg font-semibold pt-4">Endereço de Entrega</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="sm:col-span-2"><label className="text-xs font-medium text-muted-foreground mb-1.5 block">CEP *</label>
-                    <input type="text" className="w-full px-4 py-3 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-all" maxLength={9} placeholder="00000-000"
-                      value={address.cep} onChange={e => setAddress({...address, cep: maskCEP(e.target.value)})} onBlur={handleCepBlur} /></div>
-                  <div className="sm:col-span-2"><label className="text-xs font-medium text-muted-foreground mb-1.5 block">Rua *</label>
-                    <input type="text" className="w-full px-4 py-3 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-all" 
-                      value={address.street} onChange={e => setAddress({...address, street: e.target.value})} /></div>
-                  <div><label className="text-xs font-medium text-muted-foreground mb-1.5 block">Número *</label>
-                    <input type="text" className="w-full px-4 py-3 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-all" 
-                      value={address.number} onChange={e => setAddress({...address, number: e.target.value})} /></div>
-                  <div><label className="text-xs font-medium text-muted-foreground mb-1.5 block">Complemento</label>
-                    <input type="text" className="w-full px-4 py-3 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-all" 
-                      value={address.complement} onChange={e => setAddress({...address, complement: e.target.value})} /></div>
-                  <div><label className="text-xs font-medium text-muted-foreground mb-1.5 block">Cidade *</label>
-                    <input type="text" className="w-full px-4 py-3 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-all" 
-                      value={address.city} onChange={e => setAddress({...address, city: e.target.value})} /></div>
-                  <div><label className="text-xs font-medium text-muted-foreground mb-1.5 block">Estado *</label>
-                    <select className="w-full px-4 py-3 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-all bg-background"
-                      value={address.state} onChange={e => setAddress({...address, state: e.target.value})}>
+                  <div className="sm:col-span-2">
+                    <label className="text-xs font-medium text-muted-foreground mb-1.5 block">CEP *</label>
+                    <input
+                      type="text"
+                      className="w-full px-4 py-3 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-all"
+                      maxLength={9}
+                      placeholder="00000-000"
+                      value={address.cep}
+                      onChange={(e) => setAddress({ ...address, cep: maskCEP(e.target.value) })}
+                      onBlur={handleCepBlur}
+                    />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Rua *</label>
+                    <input
+                      type="text"
+                      className="w-full px-4 py-3 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-all"
+                      value={address.street}
+                      onChange={(e) => setAddress({ ...address, street: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Número *</label>
+                    <input
+                      type="text"
+                      className="w-full px-4 py-3 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-all"
+                      value={address.number}
+                      onChange={(e) => setAddress({ ...address, number: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Complemento</label>
+                    <input
+                      type="text"
+                      className="w-full px-4 py-3 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-all"
+                      value={address.complement}
+                      onChange={(e) => setAddress({ ...address, complement: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Cidade *</label>
+                    <input
+                      type="text"
+                      className="w-full px-4 py-3 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-all"
+                      value={address.city}
+                      onChange={(e) => setAddress({ ...address, city: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Estado *</label>
+                    <select
+                      className="w-full px-4 py-3 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-all bg-background"
+                      value={address.state}
+                      onChange={(e) => setAddress({ ...address, state: e.target.value })}
+                    >
                       <option value="">Selecione</option>
-                      {BRAZIL_STATES.map(s => <option key={s} value={s}>{s}</option>)}
-                    </select></div>
+                      {BRAZIL_STATES.map((s) => (
+                        <option key={s} value={s}>
+                          {s}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
-                <button onClick={handleNextStep}
-                  className="w-full flex items-center justify-center gap-2 py-4 bg-brand text-white rounded-2xl font-semibold text-sm hover:bg-brand/90 transition-colors mt-4">
+                <button
+                  onClick={handleNextStep}
+                  className="w-full flex items-center justify-center gap-2 py-4 bg-brand text-white rounded-2xl font-semibold text-sm hover:bg-brand/90 transition-colors mt-4"
+                >
                   Continuar para Pagamento <ArrowRight className="w-4 h-4" />
                 </button>
               </motion.div>
@@ -198,14 +331,18 @@ export default function CheckoutPage() {
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
                 <h2 className="font-heading text-lg font-semibold">Método de Pagamento</h2>
                 <div className="grid grid-cols-2 gap-3">
-                  <button onClick={() => setPaymentMethod("card")}
-                    className={`p-4 rounded-2xl border-2 transition-all text-left ${paymentMethod === "card" ? "border-brand bg-brand-subtle" : "border-border"}`}>
+                  <button
+                    onClick={() => setPaymentMethod("card")}
+                    className={`p-4 rounded-2xl border-2 transition-all text-left ${paymentMethod === "card" ? "border-brand bg-brand-subtle" : "border-border"}`}
+                  >
                     <CreditCard className="w-5 h-5 mb-2 text-brand" />
                     <p className="text-sm font-semibold">Cartão</p>
                     <p className="text-[10px] text-muted-foreground">Crédito ou débito</p>
                   </button>
-                  <button onClick={() => setPaymentMethod("pix")}
-                    className={`p-4 rounded-2xl border-2 transition-all text-left ${paymentMethod === "pix" ? "border-brand bg-brand-subtle" : "border-border"}`}>
+                  <button
+                    onClick={() => setPaymentMethod("pix")}
+                    className={`p-4 rounded-2xl border-2 transition-all text-left ${paymentMethod === "pix" ? "border-brand bg-brand-subtle" : "border-border"}`}
+                  >
                     <QrCode className="w-5 h-5 mb-2 text-brand" />
                     <p className="text-sm font-semibold">Pix</p>
                     <p className="text-[10px] text-muted-foreground">Aprovação instantânea</p>
@@ -213,16 +350,47 @@ export default function CheckoutPage() {
                 </div>
                 {paymentMethod === "card" && (
                   <div className="space-y-4">
-                    <div><label className="text-xs font-medium text-muted-foreground mb-1.5 block">Número do Cartão *</label>
-                      <input type="text" value={card.number} onChange={e => setCard({...card, number: maskCard(e.target.value)})} placeholder="0000 0000 0000 0000" className="w-full px-4 py-3 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-all" /></div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div><label className="text-xs font-medium text-muted-foreground mb-1.5 block">Validade *</label>
-                        <input type="text" value={card.expiry} onChange={e => setCard({...card, expiry: maskExpiry(e.target.value)})} placeholder="MM/AA" className="w-full px-4 py-3 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-all" /></div>
-                      <div><label className="text-xs font-medium text-muted-foreground mb-1.5 block">CVV *</label>
-                        <input type="text" value={card.cvv} onChange={e => setCard({...card, cvv: e.target.value.replace(/\D/g,'').slice(0,4)})} placeholder="000" className="w-full px-4 py-3 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-all" /></div>
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Número do Cartão *</label>
+                      <input
+                        type="text"
+                        value={card.number}
+                        onChange={(e) => setCard({ ...card, number: maskCard(e.target.value) })}
+                        placeholder="0000 0000 0000 0000"
+                        className="w-full px-4 py-3 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-all"
+                      />
                     </div>
-                    <div><label className="text-xs font-medium text-muted-foreground mb-1.5 block">Nome no Cartão *</label>
-                      <input type="text" value={card.name} onChange={e => setCard({...card, name: e.target.value})} className="w-full px-4 py-3 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-all" /></div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Validade *</label>
+                        <input
+                          type="text"
+                          value={card.expiry}
+                          onChange={(e) => setCard({ ...card, expiry: maskExpiry(e.target.value) })}
+                          placeholder="MM/AA"
+                          className="w-full px-4 py-3 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-all"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-medium text-muted-foreground mb-1.5 block">CVV *</label>
+                        <input
+                          type="text"
+                          value={card.cvv}
+                          onChange={(e) => setCard({ ...card, cvv: e.target.value.replace(/\D/g, "").slice(0, 4) })}
+                          placeholder="000"
+                          className="w-full px-4 py-3 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-all"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Nome no Cartão *</label>
+                      <input
+                        type="text"
+                        value={card.name}
+                        onChange={(e) => setCard({ ...card, name: e.target.value })}
+                        className="w-full px-4 py-3 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-all"
+                      />
+                    </div>
                   </div>
                 )}
                 {paymentMethod === "pix" && (
@@ -232,12 +400,18 @@ export default function CheckoutPage() {
                   </div>
                 )}
                 <div className="flex gap-3 mt-4">
-                  <button onClick={() => setStep("info")} disabled={loading}
-                    className="flex items-center gap-2 px-6 py-4 border border-border rounded-2xl text-sm font-medium hover:bg-secondary transition-colors disabled:opacity-50">
+                  <button
+                    onClick={() => setStep("info")}
+                    disabled={loading}
+                    className="flex items-center gap-2 px-6 py-4 border border-border rounded-2xl text-sm font-medium hover:bg-secondary transition-colors disabled:opacity-50"
+                  >
                     <ArrowLeft className="w-4 h-4" /> Voltar
                   </button>
-                  <button onClick={handleConfirmOrder} disabled={loading}
-                    className="flex-1 flex items-center justify-center gap-2 py-4 bg-brand text-white rounded-2xl font-semibold text-sm hover:bg-brand/90 transition-colors disabled:opacity-50">
+                  <button
+                    onClick={handleConfirmOrder}
+                    disabled={loading}
+                    className="flex-1 flex items-center justify-center gap-2 py-4 bg-brand text-white rounded-2xl font-semibold text-sm hover:bg-brand/90 transition-colors disabled:opacity-50"
+                  >
                     {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : `Confirmar Pedido — ${formatPrice(total)}`}
                   </button>
                 </div>
@@ -252,7 +426,10 @@ export default function CheckoutPage() {
                 <h2 className="font-heading text-2xl font-bold mb-2">Pedido Confirmado! 🎉</h2>
                 <p className="text-sm text-muted-foreground mb-2">Obrigada pela sua compra!</p>
                 <p className="text-xs text-muted-foreground mb-8">Você receberá um e-mail com os detalhes do pedido.</p>
-                <Link href="/" className="inline-flex items-center gap-2 px-8 py-4 bg-brand text-white rounded-2xl text-sm font-semibold hover:bg-brand/90 transition-colors">
+                <Link
+                  href="/"
+                  className="inline-flex items-center gap-2 px-8 py-4 bg-brand text-white rounded-2xl text-sm font-semibold hover:bg-brand/90 transition-colors"
+                >
                   Continuar Comprando
                 </Link>
               </motion.div>
@@ -267,7 +444,9 @@ export default function CheckoutPage() {
                 <div className="space-y-3 mb-6">
                   {items.map((item) => (
                     <div key={item.id} className="flex justify-between text-sm">
-                      <span className="text-muted-foreground truncate mr-2">{item.product.name} x{item.quantity}</span>
+                      <span className="text-muted-foreground truncate mr-2">
+                        {item.product.name} x{item.quantity}
+                      </span>
                       <span className="font-medium whitespace-nowrap">{formatPrice(item.product.price * item.quantity)}</span>
                     </div>
                   ))}
@@ -279,24 +458,59 @@ export default function CheckoutPage() {
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Frete</span>
-                    <span className={shipping === 0 ? "text-green-600 font-medium" : ""}>
-                      {shipping === 0 ? "Grátis" : formatPrice(shipping)}
-                    </span>
+                    <span className={shipping === 0 ? "text-green-600 font-medium" : ""}>{shipping === 0 ? "Grátis" : formatPrice(shipping)}</span>
                   </div>
+                  {appliedCoupon && (
+                    <div className="flex justify-between text-sm text-green-600">
+                      <span className="flex items-center gap-1">
+                        Desconto ({appliedCoupon.discount}%)
+                        <button onClick={removeCoupon} className="text-xs text-muted-foreground hover:text-red-500 ml-1" title="Remover cupom">
+                          ✕
+                        </button>
+                      </span>
+                      <span>-{formatPrice(discountAmount)}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between text-base font-bold pt-2 border-t border-border">
                     <span>Total</span>
                     <span>{formatPrice(total)}</span>
                   </div>
                 </div>
+
                 {/* Coupon */}
                 <div className="mt-4 pt-4 border-t border-border">
-                  <div className="flex gap-2">
-                    <input type="text" placeholder="Cupom de desconto"
-                      className="flex-1 px-3 py-2 border border-border rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-brand/30" />
-                    <button className="px-4 py-2 bg-primary text-primary-foreground rounded-xl text-xs font-medium hover:opacity-90 transition-opacity">
-                      Aplicar
-                    </button>
-                  </div>
+                  {appliedCoupon ? (
+                    <div className="flex items-center justify-between px-3 py-2 bg-green-50 border border-green-200 rounded-xl">
+                      <span className="text-xs font-semibold text-green-700">🎟 {appliedCoupon.code} aplicado!</span>
+                      <button onClick={removeCoupon} className="text-xs text-green-600 hover:text-red-500 transition-colors font-medium">
+                        Remover
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-1.5">
+                      <p className="text-xs text-muted-foreground font-medium">Cupom de desconto</p>
+                      <div className="flex gap-2">
+                        <input
+                          id="coupon-input"
+                          type="text"
+                          placeholder="Código do cupom"
+                          value={couponCode}
+                          onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                          onKeyDown={(e) => e.key === "Enter" && handleApplyCoupon()}
+                          className="flex-1 px-3 py-2 border border-border rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-brand/30 uppercase"
+                        />
+                        <button
+                          id="coupon-apply-btn"
+                          onClick={handleApplyCoupon}
+                          disabled={couponLoading}
+                          className="px-4 py-2 bg-primary text-primary-foreground rounded-xl text-xs font-medium hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center gap-1"
+                        >
+                          {couponLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : "Aplicar"}
+                        </button>
+                      </div>
+                      <p className="text-[10px] text-muted-foreground">Preencha seus dados pessoais antes de aplicar</p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

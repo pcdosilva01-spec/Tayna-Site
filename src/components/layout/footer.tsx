@@ -7,6 +7,15 @@ import { STORE_NAME, INSTAGRAM_URL, NAV_LINKS } from "@/lib/constants";
 import { toast } from "sonner";
 import { getSettings } from "@/actions/index";
 
+function WhatsAppIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+      <path d="M12 0C5.373 0 0 5.373 0 12c0 2.126.555 4.118 1.524 5.854L.057 23.272a.75.75 0 0 0 .92.92l5.4-1.468A11.955 11.955 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.75a9.722 9.722 0 0 1-4.98-1.367l-.356-.214-3.7 1.006 1.006-3.7-.214-.356A9.722 9.722 0 0 1 2.25 12C2.25 6.615 6.615 2.25 12 2.25S21.75 6.615 21.75 12 17.385 21.75 12 21.75z"/>
+    </svg>
+  );
+}
+
 function InstagramIcon({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -66,102 +75,127 @@ export function Footer() {
     }
   };
 
+  const whatsappHref = settings.whatsapp
+    ? `https://wa.me/55${settings.whatsapp.replace(/\D/g, "")}`
+    : "https://wa.me/";
+
   return (
-    <footer className="bg-primary text-primary-foreground">
-      <div className="border-b border-white/10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-20">
-          <div className="max-w-xl mx-auto text-center">
-            <p className="text-xs tracking-[0.3em] uppercase text-white/50 mb-3">Newsletter</p>
-            <h3 className="font-heading text-2xl lg:text-3xl font-semibold mb-3">Fique por dentro</h3>
-            <p className="text-sm text-white/60 mb-8">
-              Receba em primeira mão nossas novidades, promoções exclusivas e inspirações de moda.
-            </p>
-            <form onSubmit={handleSubscribe} className="flex gap-3 max-w-md mx-auto" id="newsletter-form">
-              <input type="email" placeholder="Seu melhor e-mail" required
-                value={email} onChange={(e) => setEmail(e.target.value)} disabled={loading}
-                className="flex-1 px-5 py-3 bg-white/10 border border-white/15 rounded-2xl text-sm text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-brand/40 transition-all"
-                id="newsletter-email" />
-              <button type="submit" disabled={loading}
-                className="px-6 py-3 bg-brand text-white rounded-2xl text-sm font-medium hover:bg-brand/90 transition-colors whitespace-nowrap disabled:opacity-50"
-                id="newsletter-submit">
-                {loading ? "Enviando..." : "Inscrever"}
-              </button>
-            </form>
+    <>
+      <footer className="bg-primary text-primary-foreground">
+        <div className="border-b border-white/10">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-20">
+            <div className="max-w-xl mx-auto text-center">
+              <p className="text-xs tracking-[0.3em] uppercase text-white/50 mb-3">Newsletter</p>
+              <h3 className="font-heading text-2xl lg:text-3xl font-semibold mb-3">Fique por dentro</h3>
+              <p className="text-sm text-white/60 mb-8">
+                Receba em primeira mão nossas novidades, promoções exclusivas e inspirações de moda.
+              </p>
+              <form onSubmit={handleSubscribe} className="flex gap-3 max-w-md mx-auto" id="newsletter-form">
+                <input type="email" placeholder="Seu melhor e-mail" required
+                  value={email} onChange={(e) => setEmail(e.target.value)} disabled={loading}
+                  className="flex-1 px-5 py-3 bg-white/10 border border-white/15 rounded-2xl text-sm text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-brand/40 transition-all"
+                  id="newsletter-email" />
+                <button type="submit" disabled={loading}
+                  className="px-6 py-3 bg-brand text-white rounded-2xl text-sm font-medium hover:bg-brand/90 transition-colors whitespace-nowrap disabled:opacity-50"
+                  id="newsletter-submit">
+                  {loading ? "Enviando..." : "Inscrever"}
+                </button>
+              </form>
+            </div>
           </div>
         </div>
-      </div>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-12">
-          <div className="lg:col-span-1">
-            <div className="mb-5">
-              <h4 className="font-heading text-xl font-semibold tracking-tight">TAYNA XAVIER</h4>
-              <p className="text-[10px] tracking-[0.35em] uppercase text-white/50">Boutique</p>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-12">
+            <div className="lg:col-span-1">
+              <div className="mb-5">
+                <h4 className="font-heading text-xl font-semibold tracking-tight">TAYNA XAVIER</h4>
+                <p className="text-[10px] tracking-[0.35em] uppercase text-white/50">Boutique</p>
+              </div>
+              <p className="text-sm text-white/60 leading-relaxed mb-6">
+                Curadoria exclusiva de peças que traduzem sofisticação e feminilidade.
+              </p>
+              <div className="flex gap-4">
+                <a href={settings.instagram} target="_blank" rel="noopener noreferrer"
+                  className="p-2.5 bg-white/10 rounded-xl hover:bg-brand transition-all duration-300" aria-label="Instagram">
+                  <InstagramIcon className="w-4 h-4" />
+                </a>
+                <a href={`mailto:${settings.email}`}
+                  className="p-2.5 bg-white/10 rounded-xl hover:bg-brand transition-all duration-300" aria-label="Email">
+                  <Mail className="w-4 h-4" />
+                </a>
+                <a href={whatsappHref} target="_blank" rel="noopener noreferrer"
+                  className="p-2.5 bg-white/10 rounded-xl hover:bg-[#25D366] transition-all duration-300" aria-label="WhatsApp">
+                  <WhatsAppIcon className="w-4 h-4" />
+                </a>
+              </div>
             </div>
-            <p className="text-sm text-white/60 leading-relaxed mb-6">
-              Curadoria exclusiva de peças que traduzem sofisticação e feminilidade.
-            </p>
-            <div className="flex gap-4">
-              <a href={settings.instagram} target="_blank" rel="noopener noreferrer"
-                className="p-2.5 bg-white/10 rounded-xl hover:bg-brand transition-all duration-300" aria-label="Instagram">
-                <InstagramIcon className="w-4 h-4" />
-              </a>
-              <a href={`mailto:${settings.email}`}
-                className="p-2.5 bg-white/10 rounded-xl hover:bg-brand transition-all duration-300" aria-label="Email">
-                <Mail className="w-4 h-4" />
-              </a>
+            <div>
+              <h5 className="text-xs tracking-[0.2em] uppercase text-white/50 mb-5 font-medium">Loja</h5>
+              <ul className="space-y-3">
+                {NAV_LINKS.slice(1).map((link) => (
+                  <li key={link.href}>
+                    <Link href={link.href} className="text-sm text-white/70 hover:text-white transition-colors">{link.label}</Link>
+                  </li>
+                ))}
+              </ul>
             </div>
-          </div>
-          <div>
-            <h5 className="text-xs tracking-[0.2em] uppercase text-white/50 mb-5 font-medium">Loja</h5>
-            <ul className="space-y-3">
-              {NAV_LINKS.slice(1).map((link) => (
-                <li key={link.href}>
-                  <Link href={link.href} className="text-sm text-white/70 hover:text-white transition-colors">{link.label}</Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div>
-            <h5 className="text-xs tracking-[0.2em] uppercase text-white/50 mb-5 font-medium">Ajuda</h5>
-            <ul className="space-y-3">
-              <li><Link href="/politica-de-troca" className="text-sm text-white/70 hover:text-white transition-colors">Trocas e Devoluções</Link></li>
-              <li><Link href="/politica-de-envio" className="text-sm text-white/70 hover:text-white transition-colors">Política de Envio</Link></li>
-              <li><Link href="/politica-de-privacidade" className="text-sm text-white/70 hover:text-white transition-colors">Privacidade</Link></li>
-              <li><Link href="/termos" className="text-sm text-white/70 hover:text-white transition-colors">Termos de Uso</Link></li>
-              <li><Link href="/faq" className="text-sm text-white/70 hover:text-white transition-colors">FAQ</Link></li>
-            </ul>
-          </div>
-          <div>
-            <h5 className="text-xs tracking-[0.2em] uppercase text-white/50 mb-5 font-medium">Contato</h5>
-            <ul className="space-y-4">
-              <li className="flex items-start gap-3">
-                <Phone className="w-4 h-4 mt-0.5 text-brand" />
-                <div><p className="text-sm text-white/70">{settings.whatsapp}</p><p className="text-xs text-white/40">WhatsApp</p></div>
-              </li>
-              <li className="flex items-start gap-3">
-                <Mail className="w-4 h-4 mt-0.5 text-brand" />
-                <p className="text-sm text-white/70">{settings.email}</p>
-              </li>
-              {settings.address && (
+            <div>
+              <h5 className="text-xs tracking-[0.2em] uppercase text-white/50 mb-5 font-medium">Ajuda</h5>
+              <ul className="space-y-3">
+                <li><Link href="/politica-de-troca" className="text-sm text-white/70 hover:text-white transition-colors">Trocas e Devoluções</Link></li>
+                <li><Link href="/politica-de-envio" className="text-sm text-white/70 hover:text-white transition-colors">Política de Envio</Link></li>
+                <li><Link href="/politica-de-privacidade" className="text-sm text-white/70 hover:text-white transition-colors">Privacidade</Link></li>
+                <li><Link href="/termos" className="text-sm text-white/70 hover:text-white transition-colors">Termos de Uso</Link></li>
+                <li><Link href="/faq" className="text-sm text-white/70 hover:text-white transition-colors">FAQ</Link></li>
+              </ul>
+            </div>
+            <div>
+              <h5 className="text-xs tracking-[0.2em] uppercase text-white/50 mb-5 font-medium">Contato</h5>
+              <ul className="space-y-4">
                 <li className="flex items-start gap-3">
-                  <MapPin className="w-4 h-4 mt-0.5 text-brand shrink-0" />
-                  <p className="text-sm text-white/70 leading-relaxed">{settings.address}</p>
+                  <Phone className="w-4 h-4 mt-0.5 text-brand" />
+                  <div><p className="text-sm text-white/70">{settings.whatsapp}</p><p className="text-xs text-white/40">WhatsApp</p></div>
                 </li>
-              )}
-            </ul>
-          </div>
-        </div>
-      </div>
-      <div className="border-t border-white/10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p className="text-xs text-white/40">© {new Date().getFullYear()} {settings.storeName}. Todos os direitos reservados.</p>
-            <div className="flex items-center gap-1 text-xs text-white/40">
-              Feito com <Heart className="w-3 h-3 text-brand mx-1 fill-brand" /> no Brasil
+                <li className="flex items-start gap-3">
+                  <Mail className="w-4 h-4 mt-0.5 text-brand" />
+                  <p className="text-sm text-white/70">{settings.email}</p>
+                </li>
+                {settings.address && (
+                  <li className="flex items-start gap-3">
+                    <MapPin className="w-4 h-4 mt-0.5 text-brand shrink-0" />
+                    <p className="text-sm text-white/70 leading-relaxed">{settings.address}</p>
+                  </li>
+                )}
+              </ul>
             </div>
           </div>
         </div>
-      </div>
-    </footer>
+        <div className="border-t border-white/10">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+              <p className="text-xs text-white/40">© {new Date().getFullYear()} {settings.storeName}. Todos os direitos reservados.</p>
+              <div className="flex items-center gap-1 text-xs text-white/40">
+                Feito com <Heart className="w-3 h-3 text-brand mx-1 fill-brand" /> no Brasil
+              </div>
+            </div>
+          </div>
+        </div>
+      </footer>
+
+      {/* WhatsApp Floating Action Button */}
+      <a
+        href={whatsappHref}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Falar pelo WhatsApp"
+        id="whatsapp-fab"
+        className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-[#25D366] text-white flex items-center justify-center shadow-lg hover:bg-[#1ebe5d] hover:scale-110 transition-all duration-300 group"
+        style={{ boxShadow: "0 4px 24px 0 rgba(37,211,102,0.45)" }}
+      >
+        {/* Pulse ring */}
+        <span className="absolute inset-0 rounded-full bg-[#25D366] animate-ping opacity-25" />
+        <WhatsAppIcon className="w-7 h-7 relative z-10" />
+      </a>
+    </>
   );
 }

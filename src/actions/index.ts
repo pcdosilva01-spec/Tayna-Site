@@ -131,6 +131,88 @@ export async function validateCoupon(code: string) {
   }
 }
 
+/**
+ * Validates a coupon AND checks whether the customer's identifiers
+ * (email, CPF, phone) are already locked to this coupon.
+ * Returns the coupon data (including discount) if everything is valid.
+ */
+export async function validateAndLockCoupon({
+  code,
+  email,
+  cpf,
+  phone,
+}: {
+  code: string;
+  email: string;
+  cpf: string;
+  phone: string;
+}) {
+  try {
+    const coupon = await prisma.coupon.findUnique({ where: { code } });
+
+    if (!coupon || !coupon.isActive) {
+      return { success: false, message: "Cupom inválido ou inativo" };
+    }
+    if (coupon.expiresAt && coupon.expiresAt < new Date()) {
+      return { success: false, message: "Cupom expirado" };
+    }
+
+    // Normalize identifiers for comparison
+    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedCpf   = cpf.replace(/\D/g, "");
+    const normalizedPhone = phone.replace(/\D/g, "");
+
+    const alreadyUsed =
+      (coupon.associatedEmail && coupon.associatedEmail === normalizedEmail) ||
+      (coupon.associatedCpf   && coupon.associatedCpf   === normalizedCpf)   ||
+      (coupon.associatedPhone && coupon.associatedPhone === normalizedPhone);
+
+    if (alreadyUsed) {
+      return { success: false, message: "Cupom já utilizado" };
+    }
+
+    return { success: true, data: coupon };
+  } catch (error) {
+    console.error("validateAndLockCoupon error:", error);
+    return { success: false, message: "Erro ao validar cupom" };
+  }
+}
+
+/**
+ * Atomically locks a coupon to the customer's identifiers so it
+ * cannot be reused with the same email, CPF, or phone number.
+ */
+export async function lockCoupon({
+  code,
+  email,
+  cpf,
+  phone,
+}: {
+  code: string;
+  email: string;
+  cpf: string;
+  phone: string;
+}) {
+  try {
+    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedCpf   = cpf.replace(/\D/g, "");
+    const normalizedPhone = phone.replace(/\D/g, "");
+
+    await prisma.coupon.update({
+      where: { code },
+      data: {
+        associatedEmail: normalizedEmail,
+        associatedCpf:   normalizedCpf,
+        associatedPhone: normalizedPhone,
+      },
+    });
+    return { success: true };
+  } catch (error) {
+    console.error("lockCoupon error:", error);
+    return { success: false, message: "Erro ao registrar cupom" };
+  }
+}
+
 // Newsletter action
 export async function subscribeNewsletter(email: string) {
   return { success: true, message: "Inscrito com sucesso!" };
