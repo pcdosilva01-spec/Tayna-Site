@@ -2,13 +2,14 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { ShoppingBag, CreditCard, QrCode, Lock, ArrowLeft, ArrowRight, Check, Loader2 } from "lucide-react";
+import { ShoppingBag, Lock, ArrowLeft, ArrowRight, Check, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useCartContext } from "@/components/shared/store-provider";
 import { formatPrice } from "@/utils/format";
 import { BRAZIL_STATES } from "@/lib/constants";
 import { toast } from "sonner";
-import { createOrder, validateAndLockCoupon, lockCoupon } from "@/actions";
+import { validateAndLockCoupon, lockCoupon } from "@/actions";
+import { StripeCheckout } from "@/components/shop/stripe-checkout";
 
 type Step = "info" | "payment" | "confirmation";
 
@@ -25,7 +26,6 @@ export default function CheckoutPage() {
 
   const [personalInfo, setPersonalInfo] = useState({ name: "", email: "", phone: "", cpf: "" });
   const [address, setAddress] = useState({ cep: "", street: "", number: "", complement: "", city: "", state: "" });
-  const [card, setCard] = useState({ number: "", expiry: "", cvv: "", name: "" });
   const [loading, setLoading] = useState(false);
 
   // Coupon state
@@ -103,37 +103,19 @@ export default function CheckoutPage() {
     setCouponCode("");
   };
 
-  const handleConfirmOrder = async () => {
-    if (paymentMethod === "card") {
-      if (!card.number || !card.expiry || !card.cvv || !card.name) {
-        toast.error("Preencha todos os dados do cartão");
-        return;
-      }
-    }
-    setLoading(true);
-    try {
-      // Lock the coupon (bind identifiers) before completing the order
-      if (appliedCoupon) {
-        await lockCoupon({
-          code: appliedCoupon.code,
-          email: personalInfo.email,
-          cpf: personalInfo.cpf,
-          phone: personalInfo.phone,
-        });
-      }
-      await createOrder({
-        customerName: personalInfo.name,
-        customerEmail: personalInfo.email,
-        total,
+  const handlePaymentSuccess = async () => {
+    // Lock coupon on successful Stripe payment
+    if (appliedCoupon) {
+      await lockCoupon({
+        code: appliedCoupon.code,
+        email: personalInfo.email,
+        cpf: personalInfo.cpf,
+        phone: personalInfo.phone,
       });
-      setStep("confirmation");
-      clearCart();
-      toast.success("Pedido confirmado com sucesso!");
-    } catch {
-      toast.error("Houve um problema ao finalizar o pedido");
-    } finally {
-      setLoading(false);
     }
+    clearCart();
+    setStep("confirmation");
+    toast.success("Pagamento confirmado com sucesso! 🎉");
   };
 
   const shipping = subtotal >= 299 ? 0 : 19.9;
@@ -329,92 +311,21 @@ export default function CheckoutPage() {
 
             {step === "payment" && (
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
-                <h2 className="font-heading text-lg font-semibold">Método de Pagamento</h2>
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    onClick={() => setPaymentMethod("card")}
-                    className={`p-4 rounded-2xl border-2 transition-all text-left ${paymentMethod === "card" ? "border-brand bg-brand-subtle" : "border-border"}`}
-                  >
-                    <CreditCard className="w-5 h-5 mb-2 text-brand" />
-                    <p className="text-sm font-semibold">Cartão</p>
-                    <p className="text-[10px] text-muted-foreground">Crédito ou débito</p>
-                  </button>
-                  <button
-                    onClick={() => setPaymentMethod("pix")}
-                    className={`p-4 rounded-2xl border-2 transition-all text-left ${paymentMethod === "pix" ? "border-brand bg-brand-subtle" : "border-border"}`}
-                  >
-                    <QrCode className="w-5 h-5 mb-2 text-brand" />
-                    <p className="text-sm font-semibold">Pix</p>
-                    <p className="text-[10px] text-muted-foreground">Aprovação instantânea</p>
-                  </button>
-                </div>
-                {paymentMethod === "card" && (
-                  <div className="space-y-4">
-                    <div>
-                      <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Número do Cartão *</label>
-                      <input
-                        type="text"
-                        value={card.number}
-                        onChange={(e) => setCard({ ...card, number: maskCard(e.target.value) })}
-                        placeholder="0000 0000 0000 0000"
-                        className="w-full px-4 py-3 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-all"
-                      />
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Validade *</label>
-                        <input
-                          type="text"
-                          value={card.expiry}
-                          onChange={(e) => setCard({ ...card, expiry: maskExpiry(e.target.value) })}
-                          placeholder="MM/AA"
-                          className="w-full px-4 py-3 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-all"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-xs font-medium text-muted-foreground mb-1.5 block">CVV *</label>
-                        <input
-                          type="text"
-                          value={card.cvv}
-                          onChange={(e) => setCard({ ...card, cvv: e.target.value.replace(/\D/g, "").slice(0, 4) })}
-                          placeholder="000"
-                          className="w-full px-4 py-3 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-all"
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Nome no Cartão *</label>
-                      <input
-                        type="text"
-                        value={card.name}
-                        onChange={(e) => setCard({ ...card, name: e.target.value })}
-                        className="w-full px-4 py-3 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-all"
-                      />
-                    </div>
-                  </div>
-                )}
-                {paymentMethod === "pix" && (
-                  <div className="text-center p-8 bg-secondary/50 rounded-2xl">
-                    <QrCode className="w-32 h-32 mx-auto text-muted-foreground/30 mb-4" />
-                    <p className="text-sm text-muted-foreground">O QR Code será gerado ao confirmar</p>
-                  </div>
-                )}
-                <div className="flex gap-3 mt-4">
-                  <button
-                    onClick={() => setStep("info")}
-                    disabled={loading}
-                    className="flex items-center gap-2 px-6 py-4 border border-border rounded-2xl text-sm font-medium hover:bg-secondary transition-colors disabled:opacity-50"
-                  >
-                    <ArrowLeft className="w-4 h-4" /> Voltar
-                  </button>
-                  <button
-                    onClick={handleConfirmOrder}
-                    disabled={loading}
-                    className="flex-1 flex items-center justify-center gap-2 py-4 bg-brand text-white rounded-2xl font-semibold text-sm hover:bg-brand/90 transition-colors disabled:opacity-50"
-                  >
-                    {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : `Confirmar Pedido — ${formatPrice(total)}`}
-                  </button>
-                </div>
+                <h2 className="font-heading text-lg font-semibold">Pagamento Seguro</h2>
+                <p className="text-xs text-muted-foreground">
+                  Seus dados são criptografados pelo Stripe. Aceitamos cartão, Pix e mais.
+                </p>
+                <StripeCheckout
+                  total={total}
+                  metadata={{
+                    customerName: personalInfo.name,
+                    customerEmail: personalInfo.email,
+                    customerCpf: personalInfo.cpf.replace(/\D/g, ""),
+                    couponCode: appliedCoupon?.code || "",
+                  }}
+                  onSuccess={handlePaymentSuccess}
+                  onBack={() => setStep("info")}
+                />
               </motion.div>
             )}
 
