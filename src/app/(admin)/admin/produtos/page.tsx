@@ -1,22 +1,30 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Search, Trash2, Eye, Package } from "lucide-react";
+import { Plus, Search, Trash2, Eye, Package, X, Upload } from "lucide-react";
 import { getProducts } from "@/actions/index";
-import { deleteProduct } from "@/actions/admin";
+import { deleteProduct, createProduct, getCategoriesAdmin } from "@/actions/admin";
 import { formatPrice } from "@/utils/format";
 import Link from "next/link";
+import { toast } from "sonner";
 
 export default function AdminProductsPage() {
   const [search, setSearch] = useState("");
   const [allProducts, setAllProducts] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
+  // Modal states
+  const [showModal, setShowModal] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({ name: "", slug: "", description: "", price: "", comparePrice: "", stock: "0", categoryId: "", featured: false, images: "" });
+
   async function loadData() {
     setLoading(true);
-    const res = await getProducts();
-    if (res.success && res.data) setAllProducts(res.data);
+    const [resProd, resCat] = await Promise.all([getProducts(), getCategoriesAdmin()]);
+    if (resProd.success && resProd.data) setAllProducts(resProd.data);
+    if (resCat.success && resCat.data) setCategories(resCat.data);
     setLoading(false);
   }
 
@@ -39,6 +47,35 @@ export default function AdminProductsPage() {
     setDeletingId(null);
   };
 
+  const handleCreate = async () => {
+    if (!form.name || !form.slug || !form.price || !form.categoryId) {
+      toast.error("Preencha todos os campos obrigatórios");
+      return;
+    }
+    setSaving(true);
+    const res = await createProduct({
+      name: form.name,
+      slug: form.slug.toLowerCase().replace(/\s+/g, '-'),
+      description: form.description || "Descrição do produto",
+      price: parseFloat(form.price),
+      comparePrice: form.comparePrice ? parseFloat(form.comparePrice) : null,
+      stock: parseInt(form.stock) || 0,
+      featured: form.featured,
+      categoryId: form.categoryId,
+      images: form.images ? [form.images] : ["/images/products/placeholder.jpg"],
+    });
+
+    if (res.success) {
+      toast.success("Produto criado com sucesso!");
+      setShowModal(false);
+      setForm({ name: "", slug: "", description: "", price: "", comparePrice: "", stock: "0", categoryId: "", featured: false, images: "" });
+      loadData();
+    } else {
+      toast.error(res.message);
+    }
+    setSaving(false);
+  };
+
   if (loading) {
     return <div className="flex justify-center items-center h-64"><p className="text-muted-foreground">Carregando produtos...</p></div>;
   }
@@ -50,7 +87,7 @@ export default function AdminProductsPage() {
           <h1 className="text-2xl font-heading font-bold">Produtos</h1>
           <p className="text-sm text-muted-foreground">{allProducts.length} produto{allProducts.length !== 1 ? "s" : ""} cadastrado{allProducts.length !== 1 ? "s" : ""}</p>
         </div>
-        <button className="flex items-center gap-2 px-5 py-2.5 bg-brand text-white rounded-xl text-sm font-medium hover:bg-brand/90 transition-colors">
+        <button onClick={() => setShowModal(true)} className="flex items-center gap-2 px-5 py-2.5 bg-brand text-white rounded-xl text-sm font-medium hover:bg-brand/90 transition-colors">
           <Plus className="w-4 h-4" /> Novo Produto
         </button>
       </div>
@@ -137,6 +174,86 @@ export default function AdminProductsPage() {
           </div>
         )}
       </div>
+
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 overflow-y-auto">
+          <div className="bg-card border border-border rounded-2xl w-full max-w-2xl shadow-2xl my-8">
+            <div className="flex items-center justify-between p-6 border-b border-border">
+              <h2 className="font-heading font-bold text-lg">Novo Produto</h2>
+              <button onClick={() => setShowModal(false)} className="p-1.5 hover:bg-secondary rounded-lg transition-colors">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="p-6 space-y-4 max-h-[60vh] overflow-y-auto">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Nome do Produto *</label>
+                  <input type="text" value={form.name} onChange={e => {
+                      setForm(p => ({ ...p, name: e.target.value, slug: e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-') }));
+                    }}
+                    placeholder="Ex: Vestido Midi Floral" className="w-full px-4 py-3 border border-border rounded-xl text-sm focus:ring-2 focus:ring-brand/30" />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Slug da URL *</label>
+                  <input type="text" value={form.slug} onChange={e => setForm(p => ({ ...p, slug: e.target.value }))}
+                    placeholder="vestido-midi-floral" className="w-full px-4 py-3 border border-border rounded-xl text-sm bg-secondary" />
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Preço (R$) *</label>
+                  <input type="number" step="0.01" value={form.price} onChange={e => setForm(p => ({ ...p, price: e.target.value }))}
+                    placeholder="299.90" className="w-full px-4 py-3 border border-border rounded-xl text-sm focus:ring-2 focus:ring-brand/30" />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Preço Antigo (Opcional)</label>
+                  <input type="number" step="0.01" value={form.comparePrice} onChange={e => setForm(p => ({ ...p, comparePrice: e.target.value }))}
+                    placeholder="349.90" className="w-full px-4 py-3 border border-border rounded-xl text-sm focus:ring-2 focus:ring-brand/30" />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Estoque *</label>
+                  <input type="number" value={form.stock} onChange={e => setForm(p => ({ ...p, stock: e.target.value }))}
+                    className="w-full px-4 py-3 border border-border rounded-xl text-sm focus:ring-2 focus:ring-brand/30" />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Categoria *</label>
+                  <select value={form.categoryId} onChange={e => setForm(p => ({ ...p, categoryId: e.target.value }))}
+                    className="w-full px-4 py-3 border border-border rounded-xl text-sm focus:ring-2 focus:ring-brand/30 bg-background">
+                    <option value="">Selecione...</option>
+                    {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </select>
+                </div>
+                <div className="flex items-end pb-3">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" checked={form.featured} onChange={e => setForm(p => ({ ...p, featured: e.target.checked }))} className="w-4 h-4 rounded text-brand focus:ring-brand" />
+                    <span className="text-sm font-medium">Produto em Destaque</span>
+                  </label>
+                </div>
+              </div>
+              <div>
+                <label className="text-xs font-medium text-muted-foreground mb-1.5 block">URL da Imagem (Provisório)</label>
+                <input type="text" value={form.images} onChange={e => setForm(p => ({ ...p, images: e.target.value }))}
+                  placeholder="/images/products/placeholder.jpg" className="w-full px-4 py-3 border border-border rounded-xl text-sm focus:ring-2 focus:ring-brand/30" />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Descrição</label>
+                <textarea value={form.description} onChange={e => setForm(p => ({ ...p, description: e.target.value }))}
+                  rows={3} className="w-full px-4 py-3 border border-border rounded-xl text-sm focus:ring-2 focus:ring-brand/30" />
+              </div>
+            </div>
+            <div className="flex gap-3 p-6 pt-0 mt-4 border-t border-border">
+              <button onClick={() => setShowModal(false)} className="flex-1 px-4 py-3 border border-border rounded-xl text-sm font-medium hover:bg-secondary transition-colors">
+                Cancelar
+              </button>
+              <button onClick={handleCreate} disabled={saving || !form.name || !form.price || !form.categoryId} className="flex-1 px-4 py-3 bg-brand text-white rounded-xl text-sm font-medium hover:bg-brand/90 transition-colors disabled:opacity-50">
+                {saving ? "Salvando..." : "Criar Produto"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

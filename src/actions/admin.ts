@@ -251,6 +251,31 @@ export async function deleteCategory(id: string) {
 
 // ─── Products ─────────────────────────────────────────────────────────────────
 
+export async function createProduct(data: {
+  name: string;
+  slug: string;
+  description: string;
+  price: number;
+  comparePrice?: number | null;
+  images: string[];
+  stock: number;
+  featured: boolean;
+  categoryId: string;
+}) {
+  try {
+    const product = await prisma.product.create({ data });
+    revalidatePath("/admin/produtos");
+    revalidatePath("/");
+    revalidatePath("/novidades");
+    revalidatePath("/mais-vendidos");
+    return { success: true, data: product };
+  } catch (error: any) {
+    console.error("createProduct error:", error);
+    if (error?.code === "P2002") return { success: false, message: "Slug já existe" };
+    return { success: false, message: "Erro ao criar produto" };
+  }
+}
+
 export async function deleteProduct(id: string) {
   try {
     await prisma.product.delete({ where: { id } });
