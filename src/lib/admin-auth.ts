@@ -46,6 +46,18 @@ export function validateAdminToken(token: string): boolean {
  * Returns true if authorized, false otherwise.
  */
 export async function requireAdmin(): Promise<boolean> {
+  try {
+    // 1. Check NextAuth session first
+    const { auth } = await import("@/lib/auth");
+    const session = await auth();
+    if (session?.user && (session.user as any).role === "ADMIN") {
+      return true;
+    }
+  } catch (error) {
+    // Ignore NextAuth errors and fallback to cookie check
+  }
+
+  // 2. Fallback to custom admin cookie
   const cookieStore = await cookies();
   const token = cookieStore.get("admin_auth")?.value;
   
