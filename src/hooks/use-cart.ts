@@ -48,10 +48,13 @@ export function useCart() {
 
         if (existingIndex > -1) {
           const updated = [...prev];
-          updated[existingIndex] = {
-            ...updated[existingIndex],
-            quantity: updated[existingIndex].quantity + quantity,
-          };
+          const existingItem = updated[existingIndex];
+          if (existingItem) {
+            updated[existingIndex] = {
+              ...existingItem,
+              quantity: existingItem.quantity + quantity,
+            };
+          }
           return updated;
         }
 
