@@ -9,17 +9,17 @@ export default auth((req) => {
   
   // Protect admin routes
   if (isAdminRoute && !isAuthPage) {
+    const protocol = req.headers.get("x-forwarded-proto") || "http";
+    const host = req.headers.get("host") || "localhost:3000";
+    const baseUrl = `${protocol}://${host}`;
+
     if (!isAuthenticated) {
-      const url = req.nextUrl.clone();
-      url.pathname = "/admin/login";
-      return NextResponse.redirect(url);
+      return NextResponse.redirect(new URL("/admin/login", baseUrl));
     }
     // Check role if needed
     if ((req.auth?.user as any)?.role !== "ADMIN") {
       // If we had a generic user role trying to access admin
-      const url = req.nextUrl.clone();
-      url.pathname = "/conta/login";
-      return NextResponse.redirect(url);
+      return NextResponse.redirect(new URL("/conta/login", baseUrl));
     }
   }
 
