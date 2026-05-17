@@ -2,6 +2,7 @@
 
 import prisma from "@/lib/prisma";
 import { productSchema, categorySchema, couponSchema, checkoutSchema, settingsSchema } from "@/lib/validations";
+import { requireAdmin } from "@/lib/admin-auth";
 
 // Product actions
 export async function getProducts(categorySlug?: string) {
@@ -229,6 +230,7 @@ export async function getSettings() {
 }
 
 export async function updateSettings(data: unknown) {
+  if (!(await requireAdmin())) return { success: false, message: "Não autorizado" };
   try {
     const validated = settingsSchema.parse(data);
     // Convert empty strings to null for optional fields

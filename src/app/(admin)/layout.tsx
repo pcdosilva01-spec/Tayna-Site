@@ -51,10 +51,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             );
           })}
         </nav>
-        <div className="p-4 border-t border-border">
-          <Link href="/" className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
-            <LogOut className="w-4 h-4" /> Ver Loja
+        <div className="p-4 border-t border-border space-y-1">
+          <Link href="/" target="_blank" className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
+            <ChevronRight className="w-4 h-4" /> Ver Loja
           </Link>
+          <button onClick={async () => {
+            const { adminLogout } = await import("@/actions/admin");
+            await adminLogout();
+            window.location.href = "/admin/login";
+          }} className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-red-500 hover:bg-red-50 transition-colors w-full text-left">
+            <LogOut className="w-4 h-4" /> Sair do Admin
+          </button>
         </div>
       </aside>
 

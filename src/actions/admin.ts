@@ -3,6 +3,7 @@
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
+import { requireAdmin, generateAdminToken } from "@/lib/admin-auth";
 
 // ─── Admin Auth ────────────────────────────────────────────────────────────────
 
@@ -12,8 +13,9 @@ export async function adminLogin(password: string) {
     return { success: false, message: "Senha incorreta" };
   }
 
+  const token = generateAdminToken();
   const cookieStore = await cookies();
-  cookieStore.set("admin_auth", "true", {
+  cookieStore.set("admin_auth", token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
@@ -21,6 +23,12 @@ export async function adminLogin(password: string) {
     maxAge: 60 * 60 * 24 * 7, // 7 days
   });
 
+  return { success: true };
+}
+
+export async function adminLogout() {
+  const cookieStore = await cookies();
+  cookieStore.delete("admin_auth");
   return { success: true };
 }
 
@@ -139,6 +147,7 @@ export async function getOrders() {
 }
 
 export async function updateOrderStatus(id: string, status: string) {
+  if (!(await requireAdmin())) return { success: false, message: "Não autorizado" };
   try {
     await prisma.order.update({ where: { id }, data: { orderStatus: status as any } });
     revalidatePath("/admin/pedidos");
@@ -185,6 +194,7 @@ export async function createCoupon(data: {
   associatedCpf?: string;
   associatedPhone?: string;
 }) {
+  if (!(await requireAdmin())) return { success: false, message: "Não autorizado" };
   try {
     const coupon = await prisma.coupon.create({
       data: {
@@ -208,6 +218,7 @@ export async function createCoupon(data: {
 }
 
 export async function toggleCoupon(id: string, isActive: boolean) {
+  if (!(await requireAdmin())) return { success: false, message: "Não autorizado" };
   try {
     await prisma.coupon.update({ where: { id }, data: { isActive } });
     revalidatePath("/admin/cupons");
@@ -219,6 +230,7 @@ export async function toggleCoupon(id: string, isActive: boolean) {
 }
 
 export async function deleteCoupon(id: string) {
+  if (!(await requireAdmin())) return { success: false, message: "Não autorizado" };
   try {
     await prisma.coupon.delete({ where: { id } });
     revalidatePath("/admin/cupons");
@@ -245,6 +257,7 @@ export async function getCategoriesAdmin() {
 }
 
 export async function createCategory(data: { name: string; slug: string; image?: string }) {
+  if (!(await requireAdmin())) return { success: false, message: "Não autorizado" };
   try {
     const category = await prisma.category.create({
       data: { name: data.name.trim(), slug: data.slug.trim().toLowerCase(), image: data.image || null },
@@ -259,6 +272,7 @@ export async function createCategory(data: { name: string; slug: string; image?:
 }
 
 export async function deleteCategory(id: string) {
+  if (!(await requireAdmin())) return { success: false, message: "Não autorizado" };
   try {
     await prisma.category.delete({ where: { id } });
     revalidatePath("/admin/categorias");
@@ -283,6 +297,7 @@ export async function createProduct(data: {
   featured: boolean;
   categoryId: string;
 }) {
+  if (!(await requireAdmin())) return { success: false, message: "Não autorizado" };
   try {
     const product = await prisma.product.create({ data });
     revalidatePath("/admin/produtos");
@@ -298,6 +313,7 @@ export async function createProduct(data: {
 }
 
 export async function deleteProduct(id: string) {
+  if (!(await requireAdmin())) return { success: false, message: "Não autorizado" };
   try {
     await prisma.product.delete({ where: { id } });
     revalidatePath("/admin/produtos");
@@ -327,6 +343,7 @@ export async function createBanner(data: {
   position: string;
   active: boolean;
 }) {
+  if (!(await requireAdmin())) return { success: false, message: "Não autorizado" };
   try {
     const banner = await prisma.banner.create({ data });
     revalidatePath("/admin/banners");
@@ -338,6 +355,7 @@ export async function createBanner(data: {
 }
 
 export async function toggleBanner(id: string, active: boolean) {
+  if (!(await requireAdmin())) return { success: false, message: "Não autorizado" };
   try {
     await prisma.banner.update({ where: { id }, data: { active } });
     revalidatePath("/admin/banners");
@@ -349,6 +367,7 @@ export async function toggleBanner(id: string, active: boolean) {
 }
 
 export async function deleteBanner(id: string) {
+  if (!(await requireAdmin())) return { success: false, message: "Não autorizado" };
   try {
     await prisma.banner.delete({ where: { id } });
     revalidatePath("/admin/banners");
