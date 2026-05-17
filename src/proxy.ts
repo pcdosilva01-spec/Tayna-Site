@@ -10,12 +10,16 @@ export default auth((req) => {
   // Protect admin routes
   if (isAdminRoute && !isAuthPage) {
     if (!isAuthenticated) {
-      return NextResponse.redirect(new URL("/admin/login", req.url));
+      const url = req.nextUrl.clone();
+      url.pathname = "/admin/login";
+      return NextResponse.redirect(url);
     }
     // Check role if needed
     if ((req.auth?.user as any)?.role !== "ADMIN") {
       // If we had a generic user role trying to access admin
-      return NextResponse.redirect(new URL("/conta/login", req.url));
+      const url = req.nextUrl.clone();
+      url.pathname = "/conta/login";
+      return NextResponse.redirect(url);
     }
   }
 
