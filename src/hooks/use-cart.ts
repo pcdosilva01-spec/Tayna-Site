@@ -63,7 +63,7 @@ export function useCart() {
             quantity,
             size,
             color,
-          },
+          } as CartItem,
         ];
       });
       setIsOpen(true);

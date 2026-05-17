@@ -8,7 +8,7 @@ import { requireAdmin } from "@/lib/admin-auth";
 export async function getProducts(categorySlug?: string) {
   try {
     const products = await prisma.product.findMany({
-      where: categorySlug ? { category: { slug: categorySlug } } : undefined,
+      ...(categorySlug ? { where: { category: { slug: categorySlug } } } : {}),
       include: { category: true },
       orderBy: { createdAt: "desc" },
     });

@@ -36,7 +36,7 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
           <div className="aspect-[3/4] rounded-2xl overflow-hidden bg-secondary relative">
             {product.images && product.images.length > 0 ? (
               <Image
-                src={product.images[0]}
+                src={product.images[0] as string}
                 alt={product.name}
                 fill
                 className="object-cover transition-transform duration-700 group-hover:scale-105"
