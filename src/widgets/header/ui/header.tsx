@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { NAV_LINKS, STORE_NAME } from "@/lib/constants";
 import { useCartContext, useWishlistContext } from "@/components/shared/store-provider";
-import { CartDrawer } from "@/components/shop/cart-drawer";
+import { CartDrawer } from "@/features/cart/ui/cart-drawer";
 import { useSession, signOut } from "next-auth/react";
 
 export function Header() {

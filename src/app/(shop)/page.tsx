@@ -1,37 +1,27 @@
-"use client";
-
-import { motion } from "framer-motion";
-import { ArrowRight, ShoppingBag, Sparkles, Truck, Shield, RotateCcw } from "lucide-react";
+import { ArrowRight, Sparkles, Truck, Shield, RotateCcw } from "lucide-react";
 import Link from "next/link";
 import { HeroSection } from "@/components/shop/hero-section";
 import { ProductCard } from "@/components/shop/product-card";
 import { getProducts, getCategories } from "@/actions/index";
-import { useState, useEffect } from "react";
+import { ScrollReveal } from "@/shared/scroll-reveal";
 
-const fadeUp: any = {
-  initial: { opacity: 0, y: 30 },
-  whileInView: { opacity: 1, y: 0 },
-  viewport: { once: true, margin: "-50px" },
-  transition: { duration: 0.6, ease: "easeOut" },
+export const metadata = {
+  title: "Início | Tayna Xavier Boutique",
+  description: "Curadoria exclusiva de peças sofisticadas para mulheres que buscam elegância e personalidade.",
 };
 
-const stagger = {
-  initial: { opacity: 0 },
-  whileInView: { opacity: 1 },
-  viewport: { once: true },
-  transition: { staggerChildren: 0.1 },
-};
+export const revalidate = 60; // SSR Cache Revalidation every 60 seconds
 
-export default function HomePage() {
-  const [products, setProducts] = useState<any[]>([]);
-  const [categories, setCategories] = useState<any[]>([]);
+export default async function HomePage() {
+  const [productsRes, categoriesRes] = await Promise.all([
+    getProducts(),
+    getCategories()
+  ]);
 
-  useEffect(() => {
-    getProducts().then((res) => setProducts(res.data || []));
-    getCategories().then((res) => setCategories(res.data || []));
-  }, []);
+  const products = productsRes.data || [];
+  const categories = categoriesRes.data || [];
 
-  const featuredProducts = products.filter((p) => p.featured);
+  const featuredProducts = products.filter((p: any) => p.featured);
   const newArrivals = products.slice(0, 4);
 
   return (
@@ -66,7 +56,7 @@ export default function HomePage() {
       {/* New Arrivals */}
       <section className="py-16 lg:py-24" id="novidades-section">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div {...fadeUp} className="flex items-end justify-between mb-10">
+          <ScrollReveal className="flex items-end justify-between mb-10">
             <div>
               <p className="text-xs tracking-[0.3em] uppercase text-brand mb-2 font-medium">Recém Chegados</p>
               <h2 className="font-heading text-3xl lg:text-4xl font-bold">Novidades</h2>
@@ -74,9 +64,9 @@ export default function HomePage() {
             <Link href="/novidades" className="hidden sm:flex items-center gap-2 text-sm text-muted-foreground hover:text-brand transition-colors group">
               Ver Todos <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </Link>
-          </motion.div>
+          </ScrollReveal>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
-            {newArrivals.map((product, i) => (
+            {newArrivals.map((product: any, i: number) => (
               <ProductCard key={product.id} product={product} index={i} />
             ))}
           </div>
@@ -91,19 +81,13 @@ export default function HomePage() {
       {/* Categories */}
       <section className="py-16 lg:py-24 bg-secondary/50" id="categorias-section">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div {...fadeUp} className="text-center mb-12">
+          <ScrollReveal className="text-center mb-12">
             <p className="text-xs tracking-[0.3em] uppercase text-brand mb-2 font-medium">Explore</p>
             <h2 className="font-heading text-3xl lg:text-4xl font-bold">Categorias</h2>
-          </motion.div>
+          </ScrollReveal>
           <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
-            {categories.slice(0, 6).map((cat, i) => (
-              <motion.div
-                key={cat.id}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1, duration: 0.5 }}
-              >
+            {categories.slice(0, 6).map((cat: any, i: number) => (
+              <ScrollReveal key={cat.id} delay={i * 0.1}>
                 <Link href={`/categoria/${cat.slug}`}
                   className="group block relative aspect-[4/3] lg:aspect-[3/2] rounded-2xl overflow-hidden bg-gradient-to-br from-brand-subtle to-accent">
                   <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
@@ -116,7 +100,7 @@ export default function HomePage() {
                     </p>
                   </div>
                 </Link>
-              </motion.div>
+              </ScrollReveal>
             ))}
           </div>
         </div>
@@ -125,7 +109,7 @@ export default function HomePage() {
       {/* Best Sellers */}
       <section className="py-16 lg:py-24" id="bestsellers-section">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div {...fadeUp} className="flex items-end justify-between mb-10">
+          <ScrollReveal className="flex items-end justify-between mb-10">
             <div>
               <p className="text-xs tracking-[0.3em] uppercase text-brand mb-2 font-medium">Mais Amados</p>
               <h2 className="font-heading text-3xl lg:text-4xl font-bold">Best Sellers</h2>
@@ -133,9 +117,9 @@ export default function HomePage() {
             <Link href="/mais-vendidos" className="hidden sm:flex items-center gap-2 text-sm text-muted-foreground hover:text-brand transition-colors group">
               Ver Todos <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </Link>
-          </motion.div>
+          </ScrollReveal>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
-            {featuredProducts.map((product, i) => (
+            {featuredProducts.map((product: any, i: number) => (
               <ProductCard key={product.id} product={product} index={i} />
             ))}
           </div>
@@ -145,7 +129,7 @@ export default function HomePage() {
       {/* Lookbook / Editorial Banner */}
       <section className="py-16 lg:py-24" id="lookbook-section">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div {...fadeUp}>
+          <ScrollReveal>
             <div className="relative rounded-3xl overflow-hidden bg-gradient-to-r from-primary to-brand aspect-[2/1] lg:aspect-[3/1]">
               <div className="absolute inset-0 flex items-center justify-center lg:justify-start">
                 <div className="text-center lg:text-left lg:pl-16 xl:pl-24 text-white max-w-lg px-6">
@@ -163,14 +147,14 @@ export default function HomePage() {
                 </div>
               </div>
             </div>
-          </motion.div>
+          </ScrollReveal>
         </div>
       </section>
 
       {/* Instagram Feed CTA */}
       <section className="py-16 lg:py-24 bg-secondary/50" id="instagram-section">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <motion.div {...fadeUp}>
+          <ScrollReveal>
             <p className="text-xs tracking-[0.3em] uppercase text-brand mb-2 font-medium">@taynaxavier_boutique</p>
             <h2 className="font-heading text-3xl lg:text-4xl font-bold mb-3">Siga no Instagram</h2>
             <p className="text-muted-foreground mb-8 max-w-md mx-auto text-sm">
@@ -189,7 +173,7 @@ export default function HomePage() {
               className="inline-flex items-center gap-2 px-7 py-3.5 border-2 border-primary text-primary rounded-2xl text-sm font-semibold hover:bg-primary hover:text-primary-foreground transition-all">
               Seguir @taynaxavier_boutique
             </a>
-          </motion.div>
+          </ScrollReveal>
         </div>
       </section>
     </>

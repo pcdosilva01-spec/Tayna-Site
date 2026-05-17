@@ -33,8 +33,8 @@ export interface CartItem {
   id: string;
   product: Product;
   quantity: number;
-  size?: string;
-  color?: string;
+  size?: string | undefined;
+  color?: string | undefined;
 }
 
 export interface Order {
@@ -85,6 +85,7 @@ export interface Settings {
   instagram: string | null;
   email: string | null;
   address: string | null;
+  topBarText?: string | null;
 }
 
 export type PaymentStatus = "PENDING" | "PAID" | "FAILED" | "REFUNDED";

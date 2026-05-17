@@ -98,20 +98,50 @@ export function CartDrawer() {
 
             {/* Footer */}
             {items.length > 0 && (
-              <div className="border-t border-border p-6 space-y-4">
+              <div className="border-t border-border p-6 bg-background space-y-4">
+                {/* Free Shipping Progress (CRO) */}
+                {(() => {
+                  const freeShippingThreshold = 299;
+                  const progress = Math.min((subtotal / freeShippingThreshold) * 100, 100);
+                  const remaining = freeShippingThreshold - subtotal;
+                  
+                  return (
+                    <div className="space-y-2 mb-4 bg-secondary/50 p-3 rounded-xl border border-border">
+                      <div className="flex items-center justify-between text-xs font-medium">
+                        {remaining > 0 ? (
+                          <span className="text-muted-foreground">Faltam <strong className="text-brand">{formatPrice(remaining)}</strong> para Frete Grátis</span>
+                        ) : (
+                          <span className="text-green-600 font-bold flex items-center gap-1">Parabéns! Você ganhou Frete Grátis</span>
+                        )}
+                        <span>{formatPrice(subtotal)}</span>
+                      </div>
+                      <div className="h-1.5 w-full bg-secondary rounded-full overflow-hidden">
+                        <div 
+                          className={`h-full rounded-full transition-all duration-500 ease-out ${remaining > 0 ? 'bg-brand' : 'bg-green-500'}`}
+                          style={{ width: `${progress}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })()}
+
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Subtotal</span>
-                  <span className="text-lg font-semibold">{formatPrice(subtotal)}</span>
+                  <span className="text-sm font-medium text-muted-foreground">Subtotal</span>
+                  <span className="text-xl font-bold">{formatPrice(subtotal)}</span>
                 </div>
-                <p className="text-xs text-muted-foreground">Frete calculado no checkout</p>
+                
                 <button onClick={handleCheckout}
-                  className="flex items-center justify-center gap-2 w-full py-3.5 bg-brand text-white rounded-2xl font-medium text-sm hover:bg-brand/90 transition-colors">
-                  Finalizar Compra <ArrowRight className="w-4 h-4" />
+                  className="flex items-center justify-center gap-2 w-full py-4 bg-brand text-white rounded-2xl font-bold text-sm hover:bg-brand/90 transition-all premium-shadow group">
+                  Finalizar Compra <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </button>
-                <button onClick={() => setIsOpen(false)}
-                  className="w-full py-3 text-sm text-muted-foreground hover:text-foreground transition-colors text-center">
-                  Continuar Comprando
-                </button>
+                
+                {/* Trust Signals (CRO) */}
+                <div className="flex items-center justify-center gap-4 pt-2 text-muted-foreground">
+                  <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-semibold">
+                    <Lock className="w-3 h-3" />
+                    <span>Pagamento Seguro</span>
+                  </div>
+                </div>
               </div>
             )}
           </motion.div>

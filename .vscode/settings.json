@@ -1,0 +1,135 @@
+{
+  // ==========================================
+  // 🚀 CORE PERFORMANCE & BEHAVIOR
+  // ==========================================
+  "editor.formatOnSave": true,
+  "editor.formatOnPaste": true,
+  "editor.linkedEditing": true,
+  "editor.minimap.enabled": false, // Reduz consumo de RAM e poluição visual
+  "editor.wordWrap": "on",
+  "editor.smoothScrolling": true,
+  "editor.cursorBlinking": "smooth",
+  "editor.cursorSmoothCaretAnimation": "on",
+  "editor.inlineSuggest.enabled": true,
+  "editor.colorDecorators": true, // Substitui a extensão Color Highlight (mais leve)
+  
+  // ==========================================
+  // 🤖 AI & CONTEXT OPTIMIZATION (Gemini 3.1)
+  // ==========================================
+  "telemetry.telemetryLevel": "off", // Menos uso de rede/CPU em background
+  "workbench.tips.enabled": false,
+  "update.mode": "default",
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/.next": true,
+    "**/build": true,
+    "**/coverage": true,
+    "**/.git": true
+  },
+  "files.exclude": {
+    "**/.git": true,
+    "**/.DS_Store": true,
+    "**/node_modules": false // Mantido visível para consultas, mas fora do search
+  },
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true,
+  "files.trimFinalNewlines": true,
+  
+  // ==========================================
+  // 🎨 UI & THEME (Premium Dark Mode)
+  // ==========================================
+  "workbench.colorTheme": "Tokyo Night",
+  "workbench.iconTheme": "material-icon-theme",
+  "workbench.startupEditor": "none",
+  "workbench.tree.indent": 16,
+  "workbench.list.smoothScrolling": true,
+  "workbench.editor.showTabs": "multiple",
+  "workbench.editor.tabSizing": "shrink",
+  "workbench.layoutControl.enabled": false,
+  "window.titleBarStyle": "custom",
+  "window.commandCenter": true,
+  "explorer.compactFolders": false,
+  
+  // ==========================================
+  // 📝 TYPOGRAPHY & LIGATURES
+  // ==========================================
+  "editor.fontFamily": "'JetBrains Mono', 'Fira Code', 'Cascadia Code', Consolas, monospace",
+  "editor.fontLigatures": true,
+  "editor.fontSize": 14,
+  "editor.lineHeight": 1.6,
+  "terminal.integrated.fontFamily": "'JetBrains Mono', 'MesloLGS NF', monospace",
+  
+  // ==========================================
+  // 🛠️ LINTING, FORMATTING & AUTOFIX
+  // ==========================================
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit",
+    "source.organizeImports": "explicit"
+  },
+  "[typescript]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+  "[typescriptreact]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+  "[javascript]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+  "[javascriptreact]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+  "[json]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+  "[jsonc]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+  
+  // ==========================================
+  // 🚀 TYPESCRIPT & JAVASCRIPT
+  // ==========================================
+  "typescript.updateImportsOnFileMove.enabled": "always",
+  "typescript.suggest.completeFunctionCalls": true,
+  "typescript.preferences.importModuleSpecifier": "non-relative",
+  "javascript.updateImportsOnFileMove.enabled": "always",
+  "javascript.suggest.completeFunctionCalls": true,
+  
+  // ==========================================
+  // 🌬️ TAILWIND CSS
+  // ==========================================
+  "tailwindCSS.experimental.classRegex": [
+    ["cva\\(([^)]*)\\)", "[\"'`]([^\"'`]*).*?[\"'`]"],
+    ["cx\\(([^)]*)\\)", "(?:'|\"|`)([^']*)(?:'|\"|`)"]
+  ],
+  "tailwindCSS.classAttributes": ["class", "className", "ngClass", "tw"],
+  
+  // ==========================================
+  // 🚨 ERROR LENS
+  // ==========================================
+  "errorLens.fontStyleItalic": true,
+  "errorLens.messageBackgroundMode": "message",
+  "errorLens.gutterIconsEnabled": true,
+  "errorLens.excludeBySource": ["cSpell"], // Ignora erros de spell check no editor
+  
+  // ==========================================
+  // 🌳 GITLENS (Clean Mode)
+  // ==========================================
+  "gitlens.hovers.currentLine.over": "line",
+  "gitlens.codeLens.recentChange.enabled": false,
+  "gitlens.codeLens.authors.enabled": false, // Remove poluição visual do code lens
+  
+  // ==========================================
+  // 📖 SPELL CHECKER
+  // ==========================================
+  "cSpell.language": "en,pt,pt-BR",
+  "cSpell.enableFiletypes": ["mdx", "typescriptreact", "javascriptreact"],
+
+  // ==========================================
+  // 🛡️ ADVANCED ELITE SETTINGS (RAM, CPU & Next.js)
+  // ==========================================
+  "editor.guides.bracketPairs": true,
+  "editor.stickyScroll.enabled": true,
+  "breadcrumbs.enabled": true,
+  "editor.bracketPairColorization.enabled": true,
+  "extensions.autoCheckUpdates": false,
+  "extensions.autoUpdate": false,
+  "editor.semanticHighlighting.enabled": true,
+  "workbench.editor.enablePreview": false,
+  "search.followSymlinks": false,
+  "git.autofetch": false,
+  "typescript.tsserver.maxTsServerMemory": 4096,
+  "files.watcherExclude": {
+    "**/.next/**": true,
+    "**/node_modules/**": true
+  }
+}

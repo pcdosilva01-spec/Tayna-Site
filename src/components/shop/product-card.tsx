@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { Heart, ShoppingBag, Eye } from "lucide-react";
 import type { Product } from "@/types";
@@ -33,9 +34,19 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
         {/* Image */}
         <Link href={`/produto/${product.slug}`} className="block">
           <div className="aspect-[3/4] rounded-2xl overflow-hidden bg-secondary relative">
-            <div className="w-full h-full bg-gradient-to-br from-secondary to-accent flex items-center justify-center">
-              <ShoppingBag className="w-12 h-12 text-muted-foreground/20" />
-            </div>
+            {product.images && product.images.length > 0 ? (
+              <Image
+                src={product.images[0]}
+                alt={product.name}
+                fill
+                className="object-cover transition-transform duration-700 group-hover:scale-105"
+                sizes="(max-width: 768px) 50vw, 25vw"
+              />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-br from-secondary to-accent flex items-center justify-center">
+                <ShoppingBag className="w-12 h-12 text-muted-foreground/20" />
+              </div>
+            )}
             {/* Hover overlay */}
             <motion.div
               initial={false}

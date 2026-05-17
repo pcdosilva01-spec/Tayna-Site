@@ -1,39 +1,21 @@
 import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
-import { createHmac } from "crypto";
+import { auth } from "@/lib/auth";
 
-const ADMIN_TOKEN_SECRET = process.env.AUTH_SECRET || "fallback-secret-change-me";
-
-function isValidAdminToken(token: string): boolean {
-  if (!token) return false;
-  // Legacy support — remove after re-login
-  if (token === "true") return true;
+export default auth((req) => {
+  const { pathname } = req.nextUrl;
+  const isAuthenticated = !!req.auth;
+  const isAuthPage = pathname.startsWith("/admin/login") || pathname.startsWith("/conta/login");
+  const isAdminRoute = pathname.startsWith("/admin");
   
-  if (!token.includes(".")) return false;
-  const lastDotIndex = token.lastIndexOf(".");
-  const payload = token.substring(0, lastDotIndex);
-  const signature = token.substring(lastDotIndex + 1);
-  
-  const expected = createHmac("sha256", ADMIN_TOKEN_SECRET)
-    .update(payload)
-    .digest("hex");
-  
-  if (signature.length !== expected.length) return false;
-  let mismatch = 0;
-  for (let i = 0; i < signature.length; i++) {
-    mismatch |= signature.charCodeAt(i) ^ expected.charCodeAt(i);
-  }
-  return mismatch === 0;
-}
-
-export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-
-  // Protect admin routes (except login page)
-  if (pathname.startsWith("/admin") && !pathname.startsWith("/admin/login")) {
-    const token = request.cookies.get("admin_auth")?.value;
-    if (!token || !isValidAdminToken(token)) {
-      return NextResponse.redirect(new URL("/admin/login", request.url));
+  // Protect admin routes
+  if (isAdminRoute && !isAuthPage) {
+    if (!isAuthenticated) {
+      return NextResponse.redirect(new URL("/admin/login", req.url));
+    }
+    // Check role if needed
+    if ((req.auth?.user as any)?.role !== "ADMIN") {
+      // If we had a generic user role trying to access admin
+      return NextResponse.redirect(new URL("/conta/login", req.url));
     }
   }
 
@@ -53,7 +35,7 @@ export function middleware(request: NextRequest) {
   );
 
   return response;
-}
+});
 
 export const config = {
   matcher: [
