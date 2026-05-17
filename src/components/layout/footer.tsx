@@ -75,8 +75,9 @@ export function Footer() {
     }
   };
 
-  const whatsappHref = settings.whatsapp
-    ? `https://wa.me/55${settings.whatsapp.replace(/\D/g, "")}`
+  const whatsappDigits = settings.whatsapp?.replace(/\D/g, "") || "";
+  const whatsappHref = whatsappDigits
+    ? `https://wa.me/${whatsappDigits.startsWith("55") ? whatsappDigits : `55${whatsappDigits}`}`
     : "https://wa.me/";
 
   return (
